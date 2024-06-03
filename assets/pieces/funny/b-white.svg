@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg"
+     xmlns:cc="http://web.resource.org/cc/" xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:svg="http://www.w3.org/2000/svg"
+     xmlns:ns1="http://sozi.baierouge.fr" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg2"
+     sodipodi:docname="WBishop.svg" inkscape:export-filename="/home/akiross/Works/Painting/chess.png"
+     viewBox="-30 35 115 43" width="100" height="100" sodipodi:version="0.32" inkscape:export-xdpi="56.25" version="1.0"
+     inkscape:output_extension="org.inkscape.output.svg.inkscape" inkscape:export-ydpi="56.25" inkscape:version="0.45.1"
+     sodipodi:docbase="/home/akiross/Works/Painting">
+    <sodipodi:namedview id="base" bordercolor="#666666" inkscape:pageshadow="2" guidetolerance="10" pagecolor="#ffffff"
+                        gridtolerance="10000" inkscape:window-height="946" width="480px" inkscape:zoom="1"
+                        objecttolerance="10" height="280px" borderopacity="1.0" inkscape:current-layer="layer1"
+                        inkscape:cx="235.70289" inkscape:cy="120.2768" inkscape:window-y="0" inkscape:window-x="0"
+                        inkscape:window-width="1272" inkscape:pageopacity="0.0" inkscape:document-units="px"/>
+    <g id="layer1" inkscape:label="Layer 1" inkscape:groupmode="layer" transform="translate(-273.91 -43.938)">
+        <path id="WBishop" style="stroke-linejoin:round;stroke:#2b2b2b;stroke-linecap:round;stroke-width:5;fill:#bababa"
+              inkscape:label="White Bishop"
+              d="m301.41 46.438l-21.38 17.75 7.88 22.593c-4.1 3.69-6.69 9.026-6.69 14.969 0 6.84 3.44 12.89 8.66 16.53-7.55 0.64-12.72 1.86-12.72 3.28 0 1.68 7.15 3.05 16.96 3.53-1.67 20.62-17.71 3.71-17.71 23.19v5.97h49.93v-5.97c0-19.47-16.03-2.62-17.72-23.19 9.83-0.48 17.04-1.85 17.04-3.53 0-1.42-5.21-2.64-12.75-3.28 5.22-3.64 8.62-9.68 8.62-16.53 0-5.927-2.55-11.249-6.62-14.938l7.87-22.624-21.37-17.75zm-0.03 13.437c0.62 0 1.12 0.502 1.12 1.125v5.438h5.66c0.62 0 1.12 0.418 1.12 0.937s-0.5 0.937-1.12 0.937h-5.66v9.438c0 0.623-0.5 1.125-1.12 1.125-0.63 0-1.13-0.502-1.13-1.125v-9.438h-5.66c-0.62 0-1.12-0.418-1.12-0.937s0.5-0.937 1.12-0.937h5.66v-5.438c0-0.623 0.5-1.125 1.13-1.125z"/>
+    </g>
+    <metadata>
+        <rdf:RDF>
+            <cc:Work>
+                <dc:format>image/svg+xml</dc:format>
+                <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+                <cc:license rdf:resource="http://creativecommons.org/licenses/publicdomain/"/>
+                <dc:publisher>
+                    <cc:Agent rdf:about="http://openclipart.org/">
+                        <dc:title>Openclipart</dc:title>
+                    </cc:Agent>
+                </dc:publisher>
+                <dc:title>Chess Set 4</dc:title>
+                <dc:date>2006-12-26T00:00:00</dc:date>
+                <dc:description/>
+                <dc:source>https://openclipart.org/detail/11563/-by--11563</dc:source>
+                <dc:creator>
+                    <cc:Agent>
+                        <dc:title>akiross</dc:title>
+                    </cc:Agent>
+                </dc:creator>
+            </cc:Work>
+            <cc:License rdf:about="http://creativecommons.org/licenses/publicdomain/">
+                <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+                <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+                <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+            </cc:License>
+        </rdf:RDF>
+    </metadata>
+</svg>

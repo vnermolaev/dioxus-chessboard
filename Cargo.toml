@@ -1,0 +1,21 @@
+[package]
+name = "dioxus-chessboard"
+version = "0.1.0"
+edition = "2021"
+authors = [
+    "Victor Ermolaev <victorermolaev@gmail.com>",
+]
+repository = "https://github.com/vnermolaev/dioxus-chessboard"
+documentation = "https://docs.rs/dioxus-chessorad/"
+license = "MIT OR Apache-2.0"
+keywords = ["web", "doixus", "component", "chessboard"]
+categories = ["gui", "wasm", "web-programming"]
+description = "A chessboard component for Dioxus"
+readme = "README.md"
+
+[dependencies]
+dioxus = { version = "0.5", features = ["web"] }
+manganis = "0.2.2"
+dioxus-logger = "0.5.0"
+tracing = "0.1.40"
+owlchess = "0.4.0"

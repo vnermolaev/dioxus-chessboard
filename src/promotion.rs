@@ -1,0 +1,128 @@
+use crate::chessboard::PlayerColor;
+use crate::move_builder::MoveBuilder;
+use crate::pieces::compute_piece_img_src;
+use crate::PieceSet;
+use dioxus::prelude::*;
+use owlchess::board::PrettyStyle;
+use owlchess::moves::PromotePiece;
+use owlchess::{Board, Cell, File, Piece, Rank};
+use tracing::debug;
+
+/// Component rendering a selection of pieces when a pawn gets promoted.
+#[component]
+pub(crate) fn Promotion(props: PromotionProperties) -> Element {
+    let board = use_context::<Signal<Board>>();
+    let move_builder = use_context::<Signal<MoveBuilder>>();
+
+    // If no promotion, return.
+    let (src, dst) = move_builder.read().check_promotion()?;
+
+    let color = board
+        .read()
+        .get(src)
+        .color()
+        .expect("Promotion is verified to be in progress");
+
+    let pieces = {
+        let pieces = vec![
+            PromotePiece::Queen,
+            PromotePiece::Knight,
+            PromotePiece::Rook,
+            PromotePiece::Bishop,
+        ];
+
+        match (props.color, dst.rank()) {
+            // Player plays for White and White is promoting or
+            // player plays for Black and Black is promoting
+            (PlayerColor::White, Rank::R8) | (PlayerColor::Black, Rank::R1) => pieces,
+            // Player plays for White and Black is promoting or
+            // player plays for Black and White is promoting and
+            (PlayerColor::White, Rank::R1) | (PlayerColor::Black, Rank::R8) => {
+                pieces.into_iter().rev().collect()
+            }
+            _ => unreachable!("Promotion happens only if destination square has Rank 1 or 8"),
+        }
+    };
+
+    let promotion_container_classes = {
+        let mut classes = vec!["absolute", "w-1/8", "h-1/2"];
+
+        let shift = match props.color {
+            PlayerColor::White => File::iter().position(|f| f == dst.file()).unwrap(),
+            PlayerColor::Black => 7 - File::iter().position(|f| f == dst.file()).unwrap(),
+        };
+        let left = format!("left-{shift}/8");
+        classes.push(&left);
+
+        let alignment = match (props.color, dst.rank()) {
+            // Player plays for White and White is promoting or
+            // player plays for Black and Black is promoting
+            (PlayerColor::White, Rank::R8) | (PlayerColor::Black, Rank::R1) => "top-0",
+            // Player plays for White and Black is promoting or
+            // player plays for Black and White is promoting and
+            (PlayerColor::White, Rank::R1) | (PlayerColor::Black, Rank::R8) => "bottom-0",
+            _ => unreachable!("Promotion happens only if destination square has Rank 1 or 8"),
+        };
+        classes.push(alignment);
+
+        classes.join(" ")
+    };
+
+    rsx! {
+        div {
+            class: promotion_container_classes,
+            for piece in pieces {
+                PromotePiece { color, piece, pieces_set: props.pieces_set }
+            }
+        }
+    }
+}
+
+#[derive(Props, Debug, PartialEq, Clone)]
+pub struct PromotionProperties {
+    color: PlayerColor,
+    pieces_set: PieceSet,
+}
+
+/// Component rendering a promotion piece for a pawn.
+#[component]
+fn PromotePiece(props: PromotePieceProps) -> Element {
+    let mut board = use_context::<Signal<Board>>();
+    let mut move_builder = use_context::<Signal<MoveBuilder>>();
+
+    let cell = Cell::from_parts(props.color, Piece::from(props.piece));
+
+    let src = compute_piece_img_src(props.pieces_set, cell)?;
+
+    let piece_container_classes = "flex h-1/4 rounded-full bg-gray-400 justify-center items-center hover:bg-orange-300 transition duration-150 ease-in-out";
+    let piece_classes = "h-4/6 hover:scale-125 transition duration-150 ease-in-out";
+
+    let onclick = move |_ev| {
+        move_builder.write().promote(props.piece, &board.read());
+        // Try finalizing the move builder and apply the move.
+        if let Some(m) = move_builder.write().finalize() {
+            debug!("Applying the move {m:?}");
+            let new_board = board.read().make_move(m).expect("Move must be valid");
+            *board.write() = new_board;
+            debug!("New board\n{}", board.read().pretty(PrettyStyle::Utf8));
+        }
+    };
+
+    rsx! {
+        div {
+            class: piece_container_classes,
+            img {
+                class: piece_classes,
+                src,
+                onclick
+            }
+        }
+    }
+}
+
+#[derive(Props, Debug, PartialEq, Clone)]
+struct PromotePieceProps {
+    color: owlchess::Color,
+    piece: PromotePiece,
+    pieces_set: PieceSet,
+}

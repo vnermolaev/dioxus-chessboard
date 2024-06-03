@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg"
+     xmlns:cc="http://web.resource.org/cc/" xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:svg="http://www.w3.org/2000/svg"
+     xmlns:ns1="http://sozi.baierouge.fr" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg2"
+     sodipodi:docname="BRook.svg" inkscape:export-filename="/home/akiross/Works/Painting/chess.png"
+     viewBox="-12 -2 80 83" width="100" height="100" sodipodi:version="0.32" inkscape:export-xdpi="56.25" version="1.0"
+     inkscape:output_extension="org.inkscape.output.svg.inkscape" inkscape:export-ydpi="56.25" inkscape:version="0.45.1"
+     sodipodi:docbase="/home/akiross/Works/Painting">
+    <sodipodi:namedview id="base" bordercolor="#666666" inkscape:pageshadow="2" guidetolerance="10" pagecolor="#ffffff"
+                        gridtolerance="10000" inkscape:window-height="946" width="480px" inkscape:zoom="1"
+                        objecttolerance="10" height="280px" borderopacity="1.0" inkscape:current-layer="layer1"
+                        inkscape:cx="464.70289" inkscape:cy="110.2768" inkscape:window-y="0" inkscape:window-x="0"
+                        inkscape:window-width="1272" inkscape:pageopacity="0.0" inkscape:document-units="px"/>
+    <g id="layer1" inkscape:label="Layer 1" inkscape:groupmode="layer" transform="translate(-360.45 -208.64)">
+        <path id="BRook" sodipodi:nodetypes="cccccccccccccc"
+              style="stroke-linejoin:round;stroke:#2b2b2b;stroke-linecap:round;stroke-width:5;fill:#404040"
+              inkscape:label="Black Rook"
+              d="m412.89 211.14l-0.03 6c0 30.19-0.76 54.9-24.94 68.86-24.52-14.16-24.97-37.72-24.97-68.86v-6h8.63v8.4h12v-8.4h8.66v8.4h12.03v-8.4h8.62z"/>
+    </g>
+    <metadata>
+        <rdf:RDF>
+            <cc:Work>
+                <dc:format>image/svg+xml</dc:format>
+                <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+                <cc:license rdf:resource="http://creativecommons.org/licenses/publicdomain/"/>
+                <dc:publisher>
+                    <cc:Agent rdf:about="http://openclipart.org/">
+                        <dc:title>Openclipart</dc:title>
+                    </cc:Agent>
+                </dc:publisher>
+                <dc:title>Chess Set 8</dc:title>
+                <dc:date>2006-12-26T00:00:00</dc:date>
+                <dc:description/>
+                <dc:source>https://openclipart.org/detail/11567/-by--11567</dc:source>
+                <dc:creator>
+                    <cc:Agent>
+                        <dc:title>akiross</dc:title>
+                    </cc:Agent>
+                </dc:creator>
+            </cc:Work>
+            <cc:License rdf:about="http://creativecommons.org/licenses/publicdomain/">
+                <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+                <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+                <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+            </cc:License>
+        </rdf:RDF>
+    </metadata>
+</svg>
