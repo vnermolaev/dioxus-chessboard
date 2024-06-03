@@ -14,7 +14,7 @@ that can be integrated into any web application built with Dioxus.
 
 - Clone the test project
   ```bash
-  git clone ...
+  git clone git@github.com:vnermolaev/dioxus-chessboard-example.git
   ```   
 
 - Switch to the test project and execute
