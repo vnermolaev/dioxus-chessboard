@@ -1,12 +1,12 @@
 [package]
 name = "dioxus-chessboard"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = [
     "Victor Ermolaev <victorermolaev@gmail.com>",
 ]
 repository = "https://github.com/vnermolaev/dioxus-chessboard"
-documentation = "https://docs.rs/dioxus-chessorad/"
+documentation = "https://docs.rs/dioxus-chessboard/"
 license = "MIT OR Apache-2.0"
 keywords = ["web", "doixus", "component", "chessboard"]
 categories = ["gui", "wasm", "web-programming"]
