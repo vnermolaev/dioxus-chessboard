@@ -19,7 +19,7 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
         )
     });
 
-    use_context_provider(|| Signal::new(MoveBuilder::new()));
+    use_context_provider(|| Signal::new(MoveBuilder::new(props.uci_move_tx)));
 
     let board = use_context::<Signal<Board>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
@@ -84,6 +84,10 @@ pub struct ChessboardProps {
     position: Option<String>,
     /// Pieces set.
     pieces_set: Option<PieceSet>,
+    /// Uci move to be applied _immediately_.
+    uci_move: Option<String>,
+    /// Transmitter channel of moves made on the board.
+    uci_move_tx: Option<Coroutine<String>>,
 }
 
 /// Complete properties with absent optional values of [ChessboardProps] filled with default values.
@@ -92,6 +96,8 @@ struct CompleteChessboardProps {
     /// Starting position in FEN notation.
     position: String,
     pieces_set: PieceSet,
+    uci_move: Option<String>,
+    uci_move_tx: Option<Coroutine<String>>,
 }
 
 impl ChessboardProps {
@@ -102,6 +108,8 @@ impl ChessboardProps {
                 .position
                 .unwrap_or_else(|| Self::default_position().to_string()),
             pieces_set: self.pieces_set.unwrap_or(PieceSet::Standard),
+            uci_move: self.uci_move,
+            uci_move_tx: self.uci_move_tx,
         }
     }
     fn default_position() -> &'static str {

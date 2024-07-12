@@ -100,7 +100,9 @@ fn PromotePiece(props: PromotePieceProps) -> Element {
     let onclick = move |_ev| {
         move_builder.write().promote(props.piece, &board.read());
         // Try finalizing the move builder and apply the move.
-        if let Some(m) = move_builder.write().finalize() {
+
+        let finalized = move_builder.write().finalize(&board.read());
+        if let Some(m) = finalized {
             debug!("Applying the move {m:?}");
             let new_board = board.read().make_move(m).expect("Move must be valid");
             *board.write() = new_board;

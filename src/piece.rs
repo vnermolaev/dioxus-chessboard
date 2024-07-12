@@ -60,7 +60,8 @@ pub(crate) fn Piece(props: PieceProps) -> Element {
 
     let ontransitionend = move |_ev| {
         // Try finalizing the move builder and apply the move.
-        if let Some(m) = move_builder.write().finalize() {
+        let finalized = move_builder.write().finalize(&board.read());
+        if let Some(m) = finalized {
             debug!("Applying the move {m:?}");
             let new_board = board.read().make_move(m).expect("Move must be valid");
             *board.write() = new_board;
