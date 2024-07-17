@@ -1,16 +1,17 @@
 use crate::chessboard::PlayerColor;
+use crate::historical_board::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
 use crate::pieces::compute_piece_img_src;
 use crate::PieceSet;
 use dioxus::prelude::*;
 use owlchess::board::PrettyStyle;
-use owlchess::{Board, Coord};
+use owlchess::Coord;
 use tracing::debug;
 
-/// Component rendering pieces on [Board].
+/// Component rendering pieces on [owlchess::Board].
 #[component]
 pub(crate) fn Piece(props: PieceProps) -> Element {
-    let mut board = use_context::<Signal<Board>>();
+    let mut board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
 
     // If promotion is required,
@@ -63,8 +64,7 @@ pub(crate) fn Piece(props: PieceProps) -> Element {
         let finalized = move_builder.write().finalize(&board.read());
         if let Some(m) = finalized {
             debug!("Applying the move {m:?}");
-            let new_board = board.read().make_move(m).expect("Move must be valid");
-            *board.write() = new_board;
+            board.write().make_move(m).expect("Move must be valid");
             debug!("New board\n{}", board.read().pretty(PrettyStyle::Utf8));
         }
     };

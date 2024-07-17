@@ -1,17 +1,18 @@
 use crate::chessboard::PlayerColor;
+use crate::historical_board::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
 use crate::pieces::compute_piece_img_src;
 use crate::PieceSet;
 use dioxus::prelude::*;
 use owlchess::board::PrettyStyle;
 use owlchess::moves::PromotePiece;
-use owlchess::{Board, Cell, File, Piece, Rank};
+use owlchess::{Cell, File, Piece, Rank};
 use tracing::debug;
 
 /// Component rendering a selection of pieces when a pawn gets promoted.
 #[component]
 pub(crate) fn Promotion(props: PromotionProperties) -> Element {
-    let board = use_context::<Signal<Board>>();
+    let board = use_context::<Signal<HistoricalBoard>>();
     let move_builder = use_context::<Signal<MoveBuilder>>();
 
     // If no promotion, return.
@@ -87,7 +88,7 @@ pub struct PromotionProperties {
 /// Component rendering a promotion piece for a pawn.
 #[component]
 fn PromotePiece(props: PromotePieceProps) -> Element {
-    let mut board = use_context::<Signal<Board>>();
+    let mut board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
 
     let cell = Cell::from_parts(props.color, Piece::from(props.piece));
@@ -104,8 +105,7 @@ fn PromotePiece(props: PromotePieceProps) -> Element {
         let finalized = move_builder.write().finalize(&board.read());
         if let Some(m) = finalized {
             debug!("Applying the move {m:?}");
-            let new_board = board.read().make_move(m).expect("Move must be valid");
-            *board.write() = new_board;
+            board.write().make_move(m).expect("Move must be valid");
             debug!("New board\n{}", board.read().pretty(PrettyStyle::Utf8));
         }
     };

@@ -5,7 +5,9 @@ use crate::promotion::Promotion;
 use crate::ranks::Ranks;
 use crate::PieceSet;
 use dioxus::prelude::*;
-use owlchess::{Board, Coord, File, Rank};
+use owlchess::board::PrettyStyle;
+use owlchess::{Coord, File, Rank};
+use tracing::{info, warn};
 
 /// Component rendering [Chessboard].
 #[component]
@@ -14,14 +16,14 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
 
     use_context_provider(|| {
         Signal::new(
-            Board::from_fen(&props.position)
+            HistoricalBoard::from_fen(&props.position)
                 .expect("Board must be constructible from a valid position"),
         )
     });
 
     use_context_provider(|| Signal::new(MoveBuilder::new(props.uci_move_tx)));
 
-    let board = use_context::<Signal<Board>>();
+    let board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
 
     let (files, ranks) = match props.color {

@@ -8,15 +8,16 @@ const _CHESSBOARD_CLASSES: &str = manganis::mg!(file("public/chessboard.css"));
 const _TAILWIND_CLASSES: &str = manganis::mg!(file("public/tailwind.css"));
 
 pub(crate) mod files;
+pub(crate) mod historical_board;
+pub(crate) mod move_builder;
 pub(crate) mod piece;
 pub(crate) mod promotion;
 pub(crate) mod ranks;
-
-pub(crate) mod move_builder;
 
 mod chessboard;
 
 pub use chessboard::{Chessboard, ChessboardProps, PlayerColor};
 
 mod pieces;
+
 pub use pieces::PieceSet;
