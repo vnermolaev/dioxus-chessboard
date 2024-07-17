@@ -1,4 +1,5 @@
 use crate::files::Files;
+use crate::historical_board::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
 use crate::piece::Piece;
 use crate::promotion::Promotion;
@@ -12,7 +13,9 @@ use tracing::{info, warn};
 /// Component rendering [Chessboard].
 #[component]
 pub fn Chessboard(props: ChessboardProps) -> Element {
-    let props = props.complete();
+    let mut last_uci = use_signal(|| None::<String>);
+
+    let mut props = props.complete();
 
     use_context_provider(|| {
         Signal::new(
@@ -21,10 +24,36 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
         )
     });
 
-    use_context_provider(|| Signal::new(MoveBuilder::new(props.uci_move_tx)));
+    use_context_provider(|| Signal::new(MoveBuilder::new(props.uci_tx)));
 
     let board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
+
+    // Take the injected uci move if only it is different from the previous injected move.
+    let injected_uci = props.uci.take().filter(|uci| {
+        last_uci
+            .read()
+            .as_ref()
+            .map(|last_uci| last_uci != uci)
+            .unwrap_or(true)
+    });
+
+    if let Some(uci) = injected_uci {
+        if move_builder
+            .write()
+            .put_uci_move(&uci, &board.read())
+            .is_ok()
+        {
+            info!("Injected move: {uci}");
+            *last_uci.write() = Some(uci);
+        } else {
+            warn!(
+                "Injected move {uci} is not legal in the current position\n{}",
+                board.read().pretty(PrettyStyle::Utf8)
+            );
+            *last_uci.write() = Some(uci);
+        }
+    }
 
     let (files, ranks) = match props.color {
         PlayerColor::White => (
@@ -87,9 +116,9 @@ pub struct ChessboardProps {
     /// Pieces set.
     pieces_set: Option<PieceSet>,
     /// Uci move to be applied _immediately_.
-    uci_move: Option<String>,
+    uci: Option<String>,
     /// Transmitter channel of moves made on the board.
-    uci_move_tx: Option<Coroutine<String>>,
+    uci_tx: Option<Coroutine<String>>,
 }
 
 /// Complete properties with absent optional values of [ChessboardProps] filled with default values.
@@ -98,8 +127,8 @@ struct CompleteChessboardProps {
     /// Starting position in FEN notation.
     position: String,
     pieces_set: PieceSet,
-    uci_move: Option<String>,
-    uci_move_tx: Option<Coroutine<String>>,
+    uci: Option<String>,
+    uci_tx: Option<Coroutine<String>>,
 }
 
 impl ChessboardProps {
@@ -110,8 +139,8 @@ impl ChessboardProps {
                 .position
                 .unwrap_or_else(|| Self::default_position().to_string()),
             pieces_set: self.pieces_set.unwrap_or(PieceSet::Standard),
-            uci_move: self.uci_move,
-            uci_move_tx: self.uci_move_tx,
+            uci: self.uci,
+            uci_tx: self.uci_tx,
         }
     }
     fn default_position() -> &'static str {

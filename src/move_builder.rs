@@ -1,6 +1,6 @@
 use dioxus::hooks::Coroutine;
 use owlchess::board::PrettyStyle;
-use owlchess::moves::{PromotePiece, Style};
+use owlchess::moves::{uci, PromotePiece, Style};
 use owlchess::{Board, Color, Coord, File, Move, MoveKind, Piece, Rank};
 use std::ops::{Deref, DerefMut};
 use tracing::{debug, warn};
@@ -27,7 +27,7 @@ use tracing::{debug, warn};
 ///                                (Finalize) --> (Move to be applied)                                             |
 ///                                     +--------------------------------------------------------------------------+
 pub struct MoveBuilder {
-    /// When the move reaches [State::Final],
+    /// When the move reaches [State::ManualFinal],
     /// the corresponding uci will be sent out.
     uci_move_tx: Option<Coroutine<String>>,
     /// [State] of the builder.
@@ -69,6 +69,10 @@ impl MoveBuilder {
         self.deref_mut().put_square(file, rank, board)
     }
 
+    pub fn put_uci_move(&mut self, uci: &str, board: &Board) -> Result<(), uci::ParseError> {
+        self.deref_mut().put_uci_move(uci, board)
+    }
+
     pub fn check_promotion(&self) -> Option<(Coord, Coord)> {
         self.deref().check_promotion()
     }
@@ -106,16 +110,80 @@ pub enum State {
         /// Supporting animation.
         support: Vec<(Coord, Coord)>,
     },
-    PrePromoRequired {
+    Promotion(Promotion),
+    Final(Final),
+}
+
+#[derive(Debug)]
+pub enum Promotion {
+    PrePromotion {
         src: Coord,
         dst: Coord,
         // Supporting animation is just (src, dst).
     },
-    PromoRequired {
+    Promotion {
         src: Coord,
         dst: Coord,
     },
-    Final(Move),
+}
+
+impl Promotion {
+    fn src(&self) -> Coord {
+        match self {
+            Self::PrePromotion { src, .. } => *src,
+            Self::Promotion { src, .. } => *src,
+        }
+    }
+
+    fn dst(&self) -> Coord {
+        match self {
+            Self::PrePromotion { dst, .. } => *dst,
+            Self::Promotion { dst, .. } => *dst,
+        }
+    }
+
+    fn animations(&self) -> Vec<(Coord, Coord)> {
+        match self {
+            Self::PrePromotion { src, dst } => vec![(*src, *dst)],
+            _ => vec![],
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum Final {
+    Manual(Move),
+    Automatic(Move),
+}
+
+impl Final {
+    fn src(&self) -> Coord {
+        match self {
+            Self::Manual(m) => m.src(),
+            Self::Automatic(m) => m.src(),
+        }
+    }
+
+    fn dst(&self) -> Coord {
+        match self {
+            Self::Manual(m) => m.dst(),
+            Self::Automatic(m) => m.dst(),
+        }
+    }
+
+    fn animations(&self) -> Vec<(Coord, Coord)> {
+        match self {
+            Self::Automatic(m) => vec![(m.src(), m.dst())],
+            _ => vec![],
+        }
+    }
+
+    fn get_move(&self) -> Move {
+        match self {
+            Self::Manual(m) => *m,
+            Self::Automatic(m) => *m,
+        }
+    }
 }
 
 impl State {
@@ -127,8 +195,7 @@ impl State {
         match self {
             Self::Src(src) => Some(*src),
             Self::RegularMove { m, .. } => Some(m.src()),
-            Self::PrePromoRequired { src, .. } => Some(*src),
-            Self::PromoRequired { src, .. } => Some(*src),
+            Self::Promotion(manual) => Some(manual.src()),
             Self::Final(m) => Some(m.src()),
             _ => None,
         }
@@ -138,8 +205,7 @@ impl State {
     fn dst(&self) -> Option<Coord> {
         match self {
             Self::RegularMove { m, .. } => Some(m.dst()),
-            Self::PrePromoRequired { dst, .. } => Some(*dst),
-            Self::PromoRequired { dst, .. } => Some(*dst),
+            Self::Promotion(manual) => Some(manual.dst()),
             Self::Final(m) => Some(m.dst()),
             _ => None,
         }
@@ -230,7 +296,7 @@ impl State {
 
                             Self::RegularMove { m, support }
                         }
-                        Ok(_) => Self::PrePromoRequired { src, dst },
+                        Ok(_) => Self::Promotion(Promotion::PrePromotion { src, dst }),
                         Err(_) => {
                             warn!("Illegal move. Cancelling the move");
                             Self::None
@@ -245,16 +311,24 @@ impl State {
         }
     }
 
+    fn put_uci_move(&mut self, uci: &str, board: &Board) -> Result<(), uci::ParseError> {
+        *self = Self::Final(Final::Automatic(Move::from_uci_legal(uci, board)?));
+
+        Ok(())
+    }
+
     fn check_promotion(&self) -> Option<(Coord, Coord)> {
         match self {
-            Self::PromoRequired { src, dst } => Some((*src, *dst)),
+            Self::Promotion(manual @ Promotion::Promotion { .. }) => {
+                Some((manual.src(), manual.dst()))
+            }
             _ => None,
         }
     }
 
     fn promote(&mut self, piece: PromotePiece, board: &Board) {
         *self = match self {
-            Self::PromoRequired { src, dst } => {
+            Self::Promotion(Promotion::Promotion { src, dst }) => {
                 // Converting the move a UCI string is a shortcut
                 // enabling me to avoid dealing with move kind and
                 // let the engine figure it out by itself.
@@ -274,7 +348,7 @@ impl State {
                 debug!("Uci {uci}; build result {m:?}");
 
                 match m {
-                    Ok(m) => Self::Final(m),
+                    Ok(m) => Self::Final(Final::Manual(m)),
                     Err(_) => {
                         warn!("Illegal promotion, cancelling the move");
                         Self::None
@@ -291,22 +365,23 @@ impl State {
     fn animations(&self) -> Vec<(Coord, Coord)> {
         match self {
             Self::RegularMove { support, .. } => support.clone(),
-            Self::PrePromoRequired { src, dst } => vec![(*src, *dst)],
+            Self::Promotion(manual) => manual.animations(),
+            Self::Final(final_move) => final_move.animations(),
             _ => vec![],
         }
     }
 
     pub(crate) fn finalize(&mut self) -> Option<Move> {
         match self {
-            Self::PrePromoRequired { src, dst } => {
-                *self = Self::PromoRequired {
+            Self::Promotion(Promotion::PrePromotion { src, dst }) => {
+                *self = Self::Promotion(Promotion::Promotion {
                     src: *src,
                     dst: *dst,
-                };
+                });
                 None
             }
-            Self::Final(m) => {
-                let m = *m;
+            Self::Final(final_move) => {
+                let m = final_move.get_move();
                 *self = Self::None;
                 Some(m)
             }
