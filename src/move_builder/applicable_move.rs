@@ -3,7 +3,9 @@ use owlchess::{Coord, Move};
 /// A [Move] can be built step by step or immediately injected.
 #[derive(Debug)]
 pub enum ApplicableMove {
+    /// [Move] built through a stp-by-step process of selecting source/destination/promotion.
     Manual(Move),
+    /// [Move] injected immediately by uci.
     Automatic(Move),
 }
 

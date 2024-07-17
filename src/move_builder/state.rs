@@ -6,27 +6,38 @@ use owlchess::{Board, Color, Coord, File, Move, MoveKind, Piece, Rank};
 use tracing::{debug, warn};
 
 /// Builder for [Move] structured as a [State] machine:
-///
-///                                               None <-----------------------------------------------------------+
-///                                                ↓                                                               |
-///                                          (Square selected)                                                     |
-///                                                ↓                                                               |
-///                 +---------------------------- Src ----------------------------------+                          |
-///                 ↓                              ↓                                    ↓                          |
-/// /     Valid square selected      \   /        Valid square selected      \   (Invalid square selected) --------+
-/// \ Promotion info IS NOT required /   \ Promotion information IS required /                                     |
-///                 ↓                                      ↓                                                       |
-///          (Animation runs)                       (Animation runs)                                               |
-///                 |                                      ↓                                                       |
-///                 |                                 PromoRequired -------------------+                           |
-///                 |                                      ↓                           ↓                           |
-///                 |                        (Valid promotion info submitted)  (Invalid promotion info submitted) -+
-///                 |                                      |                                                       |
-///                 +-------------> FinalMove <------------+                                                       |
-///                                     ↓                                                                          |
-///                                (Finalize) --> (Move to be applied)                                             |
-///                                     +--------------------------------------------------------------------------+
-
+///            ┌──────────────┐
+///            │     None     ◄──────────────────────────┐
+///            └───────┬──────┘                          │
+///                    │                                 │
+///                 Source                               │
+///                 square                               │
+///                    │                                 │
+///                    │                                 │
+///            ┌───────▼──────┐             Invalid      │
+///       ┌────┤      Src     ├─────┬───────destination──►
+///       │    └──────────────┘     │       square       │
+///       │                    Valid│square              │
+///       │                    Promotion                 │
+///       │                         │                    │
+///       │                ┌────────▼──────┐             │
+///       │                │  PrePromotion │             │
+///       │                └────────┬──────┘             │
+/// Valid square                    │                    │
+/// No promotion                Animation                │
+///       │                         │                    │
+///       │                         │                    │
+///       │                ┌────────▼──────┐  Invalid    │
+///       │                │    Promotion  ├──promotion ─►
+///       │                └────────┬──────┘             │
+///       │                         │                    │
+///       │                         │                    │
+///       │                         │                    │
+///       │  ┌───────────────────┐  │                    │
+///       └──►   ApplicableMove  ◄──┘                    │
+///          └──────────┬────────┘                       │
+///                     │                                │
+///                     └────────────────────────────────►
 #[derive(Debug)]
 pub enum State {
     None,
