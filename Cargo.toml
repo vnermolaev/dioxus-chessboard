@@ -1,6 +1,6 @@
 [package]
 name = "dioxus-chessboard"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 authors = [
     "Victor Ermolaev <victorermolaev@gmail.com>",
@@ -13,9 +13,17 @@ categories = ["gui", "wasm", "web-programming"]
 description = "A chessboard component for Dioxus"
 readme = "README.md"
 
+[[example]]
+name = "showcase"
+path = "example/showcase.rs"
+
 [dependencies]
-dioxus = { version = "0.5", features = ["web"] }
-manganis = "0.2.2"
-dioxus-logger = "0.5.0"
+dioxus = { version = "0.5.6", features = ["web"] }
+manganis = { git = "https://github.com/DioxusLabs/manganis" }
+dioxus-logger = "0.5.1"
 tracing = "0.1.40"
 owlchess = "0.4.0"
+futures-util = { version = "0.3.30", optional = true }
+
+[features]
+showcase = ["futures-util"]

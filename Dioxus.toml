@@ -11,7 +11,7 @@ default_platform = "web"
 out_dir = "dist"
 
 # resource (assets) file folder
-asset_dir = "assets"
+# asset_dir = "assets"
 
 [web.app]
 
@@ -24,13 +24,12 @@ title = "dioxus-chessboard"
 reload_html = true
 
 # which files or dirs will be watcher monitoring
-watch_path = ["src", "assets", "public"]
+watch_path = ["src", "public"]
 
 # include `assets` in web platform
 [web.resource]
 
 # CSS style file
-
 style = ["/tailwind.css"]
 
 # Javascript code file

@@ -6,24 +6,26 @@ that can be integrated into any web application built with Dioxus.
 
 ## Setup
 
-- Install Dioxus CLI
+- Install the latest Dioxus CLI
+
+  As of 19.06.2024, one needs to use the Dioxus git repo to address the asset management issue,
+  see [this issue](https://github.com/DioxusLabs/dioxus/issues/2641)
 
   ```bash
-  cargo install dioxus-cli
+  cargo install --git https://github.com/DioxusLabs/dioxus dioxus-cli
   ```
 
-- Clone the test project
+- Clone this repository
   ```bash
-  git clone git@github.com:vnermolaev/dioxus-chessboard-example.git
+  git clone git@github.com:vnermolaev/dioxus-chessboard.git
   ```   
 
-- Switch to the test project and execute
+- Compile the showcase example
   ``` bash
-  cd ./dioxus-chessboard-test
-  npx tailwindcss -i ./input.css -o ./public/tailwind.css
-  dx serve --hot-reload
+  dx serve --example=showcase --features showcase --hot-reload=true
   ```
-  This will compile the styles and open a browser tab with the example page.
+
+- Navigate to [localhost]( http://127.0.0.1:8080)
 
 ## Credit
 

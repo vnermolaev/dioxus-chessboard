@@ -39,17 +39,15 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
     });
 
     if let Some(uci) = injected_uci {
-        if move_builder
-            .write()
-            .put_uci_move(&uci, &board.read())
-            .is_ok()
-        {
+        let board = board.read();
+
+        if move_builder.write().put_uci_move(&uci, &board).is_ok() {
             info!("Injected move: {uci}");
             *last_uci.write() = Some(uci);
         } else {
             warn!(
                 "Injected move {uci} is not legal in the current position\n{}",
-                board.read().pretty(PrettyStyle::Utf8)
+                board.pretty(PrettyStyle::Utf8)
             );
             *last_uci.write() = Some(uci);
         }
