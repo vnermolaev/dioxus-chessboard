@@ -53,7 +53,7 @@ fn App() -> Element {
 
                 // Pieces' Set Radio Input
                 div {
-                    class: "space-y-2",
+                    class: "space-y-2 border border-gray-300 rounded-lg p-2",
                     label {
                         class: "block text-gray-700 font-semibold",
                         "Pieces' set"
@@ -98,7 +98,7 @@ fn App() -> Element {
 
                 // Inject UCI Move Text Input
                 div {
-                    class: "space-y-2",
+                    class: "space-y-2 border border-gray-300 rounded-lg p-2",
                     label {
                         class: "block text-gray-700 font-semibold",
                         r#for: "uci-move",
@@ -120,6 +120,11 @@ fn App() -> Element {
                             }
                         }
                     }
+                    // Hint Text
+                    p {
+                        class: "text-gray-500 text-sm",
+                        "Try a popular first move \"e2e4\""
+                    }
                 }
 
                 // Flip the Board Button
@@ -132,45 +137,6 @@ fn App() -> Element {
                     }
                 },
             }
-
-            // button {
-            //     onclick: move|_| color.write().flip(),
-            //     class: "px-4 py-2 bg-blue-500 text-white font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 transition duration-150 ease-in-out",
-            //     "Flip the board"
-            // }
-            // br {}
-            // label { "Pieces set" }
-            // input {
-            //     r#type: "range",
-            //     min: "1",
-            //     max: "2",
-            //     oninput: move |ev| {
-            //         // Update the state with the new value
-            //         let value = ev.value().parse::<u8>().expect("Slider value must be well defined");
-            //         match value {
-            //             1 =>  *pieces_set.write() = PieceSet::Standard,
-            //             2 =>  *pieces_set.write() = PieceSet::Funny,
-            //             _ => {}
-            //         }
-            //
-            //     }
-            // }
-            // br {}
-            // label { "Inject UCI" }
-            // input {
-            //     r#type: "text",
-            //     class: "border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500",
-            //     oninput: move |ev| {
-            //         *uci_content.write() = ev.value();
-            //     },
-            //     onkeypress: move |ev| {
-            //         if ev.key() == Key::Enter {
-            //             let value = uci_content.read().to_owned();
-            //             debug!("{value}");
-            //             *uci.write() = Some(value);
-            //         }
-            //     }
-            // }
         }
     }
 }

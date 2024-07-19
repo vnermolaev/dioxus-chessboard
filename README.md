@@ -4,6 +4,10 @@
 for the Dioxus framework. This crate offers an interactive and customizable chessboard
 that can be integrated into any web application built with Dioxus.
 
+<p align="center">
+  <img src="./example/showcase.gif" />
+</p>
+
 ## Setup
 
 - Install the latest Dioxus CLI
