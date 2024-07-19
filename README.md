@@ -12,8 +12,10 @@ that can be integrated into any web application built with Dioxus.
 
 - Install the latest Dioxus CLI
 
-  As of 19.06.2024, one needs to use the Dioxus git repo to address the asset management issue,
-  see [this issue](https://github.com/DioxusLabs/dioxus/issues/2641)
+  As of 19.06.2024, one needs to install the CLI from the Dioxus repo to address the asset
+  management [issue](https://github.com/DioxusLabs/dioxus/issues/2641).
+  For the same reason, the asset management crate `manganis` is pulled directly from git. Consequently, this crate
+  cannot be currently updated on [crates.io](https://crates.io/crates/dioxus-chessboard).
 
   ```bash
   cargo install --git https://github.com/DioxusLabs/dioxus dioxus-cli
