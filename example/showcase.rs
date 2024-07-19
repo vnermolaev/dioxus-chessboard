@@ -34,8 +34,11 @@ fn App() -> Element {
 
     rsx! {
         div {
+            class: "bg-gray-100 flex w-full space-x-4 min-h-screen",
+
+            // Chessboard.
             div {
-                class: "w-1/3 border border-black",
+                class: "w-1/3 h-1/3 border border-black",
                 Chessboard {
                     color: color.read().to_owned(),
                     pieces_set:  pieces_set.read().to_owned(),
@@ -43,44 +46,131 @@ fn App() -> Element {
                     uci_tx
                 }
             }
-            button {
-                onclick: move|_| color.write().flip(),
-                class: "px-4 py-2 bg-blue-500 text-white font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 transition duration-150 ease-in-out",
-                "Flip the board"
-            }
-            br {}
-            label { "Pieces set" }
-            input {
-                r#type: "range",
-                min: "1",
-                max: "2",
-                oninput: move |ev| {
-                    // Update the state with the new value
-                    let value = ev.value().parse::<u8>().expect("Slider value must be well defined");
-                    match value {
-                        1 =>  *pieces_set.write() = PieceSet::Standard,
-                        2 =>  *pieces_set.write() = PieceSet::Funny,
-                        _ => {}
-                    }
 
-                }
-            }
-            br {}
-            label { "Inject UCI" }
-            input {
-                r#type: "text",
-                class: "border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500",
-                oninput: move |ev| {
-                    *uci_content.write() = ev.value();
+            // Controls.
+            div {
+                class: "bg-white p-6 rounded-lg shadow-lg w-1/3 h-1/3 space-y-4",
+
+                // Pieces' Set Radio Input
+                div {
+                    class: "space-y-2",
+                    label {
+                        class: "block text-gray-700 font-semibold",
+                        "Pieces' set"
+                    },
+                    div {
+                        class: "flex items-center space-x-4",
+                        label {
+                            class: "inline-flex items-center",
+                            input {
+                                r#type: "radio",
+                                class: "form-radio text-blue-500",
+                                name: "pieces-set",
+                                value: "standard",
+                                checked: true,
+                                oninput: move |_ev| {
+                                    *pieces_set.write() = PieceSet::Standard
+                                }
+                            },
+                            span {
+                                class: "ml-2 text-gray-700",
+                                "Standard"
+                            }
+                        },
+                        label {
+                            class: "inline-flex items-center",
+                            input {
+                                r#type: "radio",
+                                class: "form-radio text-blue-500",
+                                name: "pieces-set",
+                                value: "funny",
+                                oninput: move |_ev| {
+                                    *pieces_set.write() = PieceSet::Funny
+                                }
+                            },
+                            span {
+                                class: "ml-2 text-gray-700",
+                                "Funny"
+                            }
+                        }
+                    }
                 },
-                onkeypress: move |ev| {
-                    if ev.key() == Key::Enter {
-                        let value = uci_content.read().to_owned();
-                        debug!("{value}");
-                        *uci.write() = Some(value);
+
+                // Inject UCI Move Text Input
+                div {
+                    class: "space-y-2",
+                    label {
+                        class: "block text-gray-700 font-semibold",
+                        r#for: "uci-move",
+                        "Inject UCI move"
+                    },
+                    input {
+                        r#type: "text",
+                        id: "uci-move",
+                        class: "form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50",
+                        placeholder: "Press Enter to send the move to Chessboard",
+                        oninput: move |ev| {
+                            *uci_content.write() = ev.value();
+                        },
+                        onkeypress: move |ev| {
+                            if ev.key() == Key::Enter {
+                                let value = uci_content.read().to_owned();
+                                debug!("{value}");
+                                *uci.write() = Some(value);
+                            }
+                        }
                     }
                 }
+
+                // Flip the Board Button
+                div {
+                    class: "flex justify-start",
+                    button {
+                        class: "bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
+                        onclick: move|_| color.write().flip(),
+                        "Flip the board"
+                    }
+                },
             }
+
+            // button {
+            //     onclick: move|_| color.write().flip(),
+            //     class: "px-4 py-2 bg-blue-500 text-white font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 transition duration-150 ease-in-out",
+            //     "Flip the board"
+            // }
+            // br {}
+            // label { "Pieces set" }
+            // input {
+            //     r#type: "range",
+            //     min: "1",
+            //     max: "2",
+            //     oninput: move |ev| {
+            //         // Update the state with the new value
+            //         let value = ev.value().parse::<u8>().expect("Slider value must be well defined");
+            //         match value {
+            //             1 =>  *pieces_set.write() = PieceSet::Standard,
+            //             2 =>  *pieces_set.write() = PieceSet::Funny,
+            //             _ => {}
+            //         }
+            //
+            //     }
+            // }
+            // br {}
+            // label { "Inject UCI" }
+            // input {
+            //     r#type: "text",
+            //     class: "border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500",
+            //     oninput: move |ev| {
+            //         *uci_content.write() = ev.value();
+            //     },
+            //     onkeypress: move |ev| {
+            //         if ev.key() == Key::Enter {
+            //             let value = uci_content.read().to_owned();
+            //             debug!("{value}");
+            //             *uci.write() = Some(value);
+            //         }
+            //     }
+            // }
         }
     }
 }

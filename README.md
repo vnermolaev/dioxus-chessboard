@@ -20,6 +20,11 @@ that can be integrated into any web application built with Dioxus.
   git clone git@github.com:vnermolaev/dioxus-chessboard.git
   ```   
 
+- Compile the styles
+  ``` bash
+  npx tailwindcss -i ./input.css -o ./public/tailwind.css --watch
+  ```
+
 - Compile the showcase example
   ``` bash
   dx serve --example=showcase --features showcase --hot-reload=true
