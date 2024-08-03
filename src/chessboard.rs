@@ -14,18 +14,7 @@ use tracing::{debug, info, warn};
 /// Component rendering [Chessboard].
 #[component]
 pub fn Chessboard(props: ChessboardProps) -> Element {
-    if let Some(mut rx) = get_chessboard_receiver() {
-        debug!("Initializing chessboard message loop");
-        spawn(async move {
-            while let Some(action) = rx.recv().await {
-                debug!("Chessboard must act: {action:?}");
-            }
-        });
-    }
-
-    let mut last_uci = use_signal(|| None::<String>);
-
-    let mut props = props.complete();
+    let props = props.complete();
 
     use_context_provider(|| {
         Signal::new(
@@ -39,28 +28,28 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
     let board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
 
-    // Take the injected uci move if only it is different from the previous injected move.
-    let injected_uci = props.uci.take().filter(|uci| {
-        last_uci
-            .read()
-            .as_ref()
-            .map(|last_uci| last_uci != uci)
-            .unwrap_or(true)
-    });
+    // Spawn processing of injected actions.
+    if let Some(mut rx) = get_chessboard_receiver() {
+        debug!("Initializing chessboard message loop");
+        spawn(async move {
+            while let Some(action) = rx.recv().await {
+                debug!("Chessboard must act: {action:?}");
+                match action {
+                    Action::Uci(uci) => {
+                        let board = board.read();
 
-    if let Some(uci) = injected_uci {
-        let board = board.read();
-
-        if move_builder.write().put_uci_move(&uci, &board).is_ok() {
-            info!("Injected move: {uci}");
-            *last_uci.write() = Some(uci);
-        } else {
-            warn!(
-                "Injected move {uci} is not legal in the current position\n{}",
-                board.pretty(PrettyStyle::Utf8)
-            );
-            *last_uci.write() = Some(uci);
-        }
+                        if move_builder.write().put_uci_move(&uci, &board).is_ok() {
+                            info!("Injected move: {uci}");
+                        } else {
+                            warn!(
+                                "Injected move {uci} is not legal in the current position\n{}",
+                                board.pretty(PrettyStyle::Utf8)
+                            );
+                        }
+                    }
+                }
+            }
+        });
     }
 
     let (files, ranks) = match props.color {
@@ -123,8 +112,6 @@ pub struct ChessboardProps {
     position: Option<String>,
     /// Pieces set.
     pieces_set: Option<PieceSet>,
-    /// Uci move to be applied _immediately_.
-    uci: Option<String>,
     /// Transmitter channel of moves made on the board.
     uci_tx: Option<Coroutine<String>>,
 }
@@ -141,7 +128,6 @@ struct CompleteChessboardProps {
     /// Starting position in FEN notation.
     position: String,
     pieces_set: PieceSet,
-    uci: Option<String>,
     uci_tx: Option<Coroutine<String>>,
 }
 
@@ -153,7 +139,6 @@ impl ChessboardProps {
                 .position
                 .unwrap_or_else(|| Self::default_position().to_string()),
             pieces_set: self.pieces_set.unwrap_or(PieceSet::Standard),
-            uci: self.uci,
             uci_tx: self.uci_tx,
         }
     }

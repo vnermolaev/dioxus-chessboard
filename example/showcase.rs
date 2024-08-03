@@ -16,13 +16,9 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-    let client = ChessboardClient::get();
-    client.send(Action::Uci("e2e4".to_string()));
-
     let mut color = use_signal(|| PlayerColor::White);
     let mut pieces_set = use_signal(|| PieceSet::Standard);
     let mut uci_content = use_signal(|| "".to_string());
-    let mut uci = use_signal(|| None);
 
     let _castling =
         "r3kbnr/ppp1qppp/2np4/4p3/2B1P1b1/P1N2N2/1PPP1PPP/R1BQK2R w KQkq - 1 6".to_string();
@@ -45,7 +41,6 @@ fn App() -> Element {
                 Chessboard {
                     color: color.read().to_owned(),
                     pieces_set:  pieces_set.read().to_owned(),
-                    uci: uci.read().to_owned(),
                     uci_tx
                 }
             }
@@ -119,7 +114,7 @@ fn App() -> Element {
                             if ev.key() == Key::Enter {
                                 let value = uci_content.read().to_owned();
                                 debug!("{value}");
-                                *uci.write() = Some(value);
+                                ChessboardClient::send(Action::Uci(value));
                             }
                         }
                     }
@@ -135,10 +130,7 @@ fn App() -> Element {
                     class: "flex justify-start",
                     button {
                         class: "bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
-                        onclick: move|_| {
-                            color.write().flip();
-                            client.send(Action::Uci("Flipping the board".to_string()));
-                        },
+                        onclick: move|_| color.write().flip(),
                         "Flip the board"
                     }
                 },
