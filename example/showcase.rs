@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 use dioxus::prelude::*;
-use dioxus_chessboard::{Chessboard, PieceSet, PlayerColor};
+use dioxus_chessboard::{Action, Chessboard, ChessboardClient, PieceSet, PlayerColor};
 use tracing::{debug, Level};
 
 #[cfg(feature = "showcase")]
@@ -16,6 +16,9 @@ fn main() {
 
 #[component]
 fn App() -> Element {
+    let client = ChessboardClient::get();
+    client.send(Action::Uci("e2e4".to_string()));
+
     let mut color = use_signal(|| PlayerColor::White);
     let mut pieces_set = use_signal(|| PieceSet::Standard);
     let mut uci_content = use_signal(|| "".to_string());
@@ -132,7 +135,10 @@ fn App() -> Element {
                     class: "flex justify-start",
                     button {
                         class: "bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
-                        onclick: move|_| color.write().flip(),
+                        onclick: move|_| {
+                            color.write().flip();
+                            client.send(Action::Uci("Flipping the board".to_string()));
+                        },
                         "Flip the board"
                     }
                 },

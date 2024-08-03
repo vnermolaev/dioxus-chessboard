@@ -1,3 +1,4 @@
+use crate::communication::get_chessboard_receiver;
 use crate::files::Files;
 use crate::historical_board::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
@@ -8,11 +9,20 @@ use crate::PieceSet;
 use dioxus::prelude::*;
 use owlchess::board::PrettyStyle;
 use owlchess::{Coord, File, Rank};
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
 /// Component rendering [Chessboard].
 #[component]
 pub fn Chessboard(props: ChessboardProps) -> Element {
+    if let Some(mut rx) = get_chessboard_receiver() {
+        debug!("Initializing chessboard message loop");
+        spawn(async move {
+            while let Some(action) = rx.recv().await {
+                debug!("Chessboard must act: {action:?}");
+            }
+        });
+    }
+
     let mut last_uci = use_signal(|| None::<String>);
 
     let mut props = props.complete();
@@ -117,6 +127,12 @@ pub struct ChessboardProps {
     uci: Option<String>,
     /// Transmitter channel of moves made on the board.
     uci_tx: Option<Coroutine<String>>,
+}
+
+#[derive(Debug)]
+/// List of action [Chessboard] can receive via its client.
+pub enum Action {
+    Uci(String),
 }
 
 /// Complete properties with absent optional values of [ChessboardProps] filled with default values.
