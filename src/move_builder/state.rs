@@ -1,5 +1,6 @@
 use crate::move_builder::applicable_move::ApplicableMove;
 use crate::move_builder::promotion::Promotion;
+use crate::move_builder::MoveAction;
 use owlchess::board::PrettyStyle;
 use owlchess::moves::{uci, PromotePiece};
 use owlchess::{Board, Color, Coord, File, Move, MoveKind, Piece, Rank};
@@ -176,10 +177,19 @@ impl State {
         }
     }
 
-    pub(crate) fn put_uci_move(&mut self, uci: &str, board: &Board) -> Result<(), uci::ParseError> {
+    pub(crate) fn apply_uci_move(
+        &mut self,
+        uci: &str,
+        board: &Board,
+    ) -> Result<(), uci::ParseError> {
         *self = Self::ApplicableMove(ApplicableMove::Automatic(Move::from_uci_legal(uci, board)?));
 
         Ok(())
+    }
+
+    pub(crate) fn revert_move(&mut self, m: Move) {
+        let m = unsafe { Move::new_unchecked(m.kind(), m.src_cell(), m.dst(), m.src()) };
+        *self = Self::ApplicableMove(ApplicableMove::Revert(m));
     }
 
     pub(crate) fn check_promotion(&self) -> Option<(Coord, Coord)> {
@@ -236,26 +246,31 @@ impl State {
         }
     }
 
-    pub(crate) fn finalize(&mut self) -> Option<Move> {
+    pub(crate) fn finalize(&mut self) -> MoveAction {
         match self {
             Self::Promotion(Promotion::PrePromotion { src, dst }) => {
                 *self = Self::Promotion(Promotion::Promotion {
                     src: *src,
                     dst: *dst,
                 });
-                None
+                MoveAction::None
             }
             Self::ApplicableMove(final_move) => {
-                let m = final_move.get_move();
+                let action = match final_move {
+                    ApplicableMove::Manual(m) | ApplicableMove::Automatic(m) => {
+                        MoveAction::Apply(*m)
+                    }
+                    ApplicableMove::Revert(_) => MoveAction::Revert,
+                };
                 *self = Self::None;
-                Some(m)
+                action
             }
             Self::Move { m, .. } => {
                 let m = *m;
                 *self = Self::None;
-                Some(m)
+                MoveAction::Apply(m)
             }
-            _ => None,
+            _ => MoveAction::None,
         }
     }
 }

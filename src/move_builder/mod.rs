@@ -51,8 +51,15 @@ impl MoveBuilder {
         self.deref_mut().put_square(file, rank, board)
     }
 
-    pub fn put_uci_move(&mut self, uci: &str, board: &Board) -> Result<(), uci::ParseError> {
-        self.deref_mut().put_uci_move(uci, board)
+    /// Tries to apply a UCI move, if illegal it will error.
+    pub fn apply_uci_move(&mut self, uci: &str, board: &Board) -> Result<(), uci::ParseError> {
+        self.deref_mut().apply_uci_move(uci, board)
+    }
+
+    /// Reverts the [Move] m.
+    /// Internally maintains a fictional move which always finalizes to [None].
+    pub fn revert_move(&mut self, m: Move) {
+        self.deref_mut().revert_move(m);
     }
 
     pub fn check_promotion(&self) -> Option<(Coord, Coord)> {
@@ -67,10 +74,10 @@ impl MoveBuilder {
         self.deref().animations()
     }
 
-    pub fn finalize(&mut self, board: &Board) -> Option<Move> {
+    pub fn finalize(&mut self, board: &Board) -> MoveAction {
         let m = self.deref_mut().finalize();
 
-        if let (Some(ref m), Some(ref uci_move_tx)) = (m, self.uci_move_tx) {
+        if let (MoveAction::Apply(ref m), Some(ref uci_move_tx)) = (m, self.uci_move_tx) {
             // There is a valid move and a coroutine to report it.
             let uci = m
                 .styled(board, Style::Uci)
@@ -81,4 +88,11 @@ impl MoveBuilder {
 
         m
     }
+}
+
+#[derive(Clone, Copy)]
+pub enum MoveAction {
+    None,
+    Apply(Move),
+    Revert,
 }

@@ -35,10 +35,10 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
             while let Some(action) = rx.recv().await {
                 debug!("Chessboard must act: {action:?}");
                 match action {
-                    Action::Uci(uci) => {
+                    Action::MakeUciMove(uci) => {
                         let board = board.read();
 
-                        if move_builder.write().put_uci_move(&uci, &board).is_ok() {
+                        if move_builder.write().apply_uci_move(&uci, &board).is_ok() {
                             info!("Injected move: {uci}");
                         } else {
                             warn!(
@@ -46,6 +46,15 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
                                 board.pretty(PrettyStyle::Utf8)
                             );
                         }
+                    }
+                    Action::RevertMove => {
+                        let Some(m) = board.read().last_move() else {
+                            continue;
+                        };
+
+                        move_builder.write().revert_move(m);
+
+                        // board.write().revert_move();
                     }
                 }
             }
@@ -118,8 +127,9 @@ pub struct ChessboardProps {
 
 #[derive(Debug)]
 /// List of action [Chessboard] can receive via its client.
-pub enum Action {
-    Uci(String),
+pub(crate) enum Action {
+    MakeUciMove(String),
+    RevertMove,
 }
 
 /// Complete properties with absent optional values of [ChessboardProps] filled with default values.

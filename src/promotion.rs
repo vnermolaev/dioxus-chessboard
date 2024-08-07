@@ -2,12 +2,10 @@ use crate::chessboard::PlayerColor;
 use crate::historical_board::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
 use crate::pieces::compute_piece_img_src;
-use crate::PieceSet;
+use crate::{finalize, PieceSet};
 use dioxus::prelude::*;
-use owlchess::board::PrettyStyle;
 use owlchess::moves::PromotePiece;
 use owlchess::{Cell, File, Piece, Rank};
-use tracing::debug;
 
 /// Component rendering a selection of pieces when a pawn gets promoted.
 #[component]
@@ -99,15 +97,11 @@ fn PromotePiece(props: PromotePieceProps) -> Element {
     let piece_classes = "h-4/6 hover:scale-125 transition duration-150 ease-in-out";
 
     let onclick = move |_ev| {
-        move_builder.write().promote(props.piece, &board.read());
-        // Try finalizing the move builder and apply the move.
-
-        let finalized = move_builder.write().finalize(&board.read());
-        if let Some(m) = finalized {
-            debug!("Applying the move {m:?}");
-            board.write().make_move(m).expect("Move must be valid");
-            debug!("New board\n{}", board.read().pretty(PrettyStyle::Utf8));
+        {
+            let board = board.read();
+            move_builder.write().promote(props.piece, &board);
         }
+        finalize(&mut move_builder, &mut board);
     };
 
     rsx! {

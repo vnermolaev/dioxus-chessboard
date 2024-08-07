@@ -7,6 +7,9 @@ pub enum ApplicableMove {
     Manual(Move),
     /// [Move] injected immediately by uci.
     Automatic(Move),
+    /// Fictional [Move] to manage step-backs.
+    /// It shall never be applied to a [Board].
+    Revert(Move),
 }
 
 impl ApplicableMove {
@@ -14,6 +17,7 @@ impl ApplicableMove {
         match self {
             Self::Manual(m) => m.src(),
             Self::Automatic(m) => m.src(),
+            Self::Revert(m) => m.src(),
         }
     }
 
@@ -21,20 +25,15 @@ impl ApplicableMove {
         match self {
             Self::Manual(m) => m.dst(),
             Self::Automatic(m) => m.dst(),
+            Self::Revert(m) => m.dst(),
         }
     }
 
     pub(crate) fn animations(&self) -> Vec<(Coord, Coord)> {
         match self {
             Self::Automatic(m) => vec![(m.src(), m.dst())],
+            Self::Revert(m) => vec![(m.src(), m.dst())],
             _ => vec![],
-        }
-    }
-
-    pub(crate) fn get_move(&self) -> Move {
-        match self {
-            Self::Manual(m) => *m,
-            Self::Automatic(m) => *m,
         }
     }
 }

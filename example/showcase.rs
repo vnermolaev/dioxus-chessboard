@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 use dioxus::prelude::*;
-use dioxus_chessboard::{Action, Chessboard, ChessboardClient, PieceSet, PlayerColor};
+use dioxus_chessboard::{Chessboard, ChessboardClient, PieceSet, PlayerColor};
 use tracing::{debug, Level};
 
 #[cfg(feature = "showcase")]
@@ -92,7 +92,7 @@ fn App() -> Element {
                             }
                         }
                     }
-                },
+                }
 
                 // Inject UCI Move Text Input
                 div {
@@ -114,7 +114,7 @@ fn App() -> Element {
                             if ev.key() == Key::Enter {
                                 let value = uci_content.read().to_owned();
                                 debug!("{value}");
-                                ChessboardClient::send(Action::Uci(value));
+                                ChessboardClient::make_move(&value);
                             }
                         }
                     }
@@ -130,8 +130,18 @@ fn App() -> Element {
                     class: "flex justify-start",
                     button {
                         class: "bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
-                        onclick: move|_| color.write().flip(),
+                        onclick: move |_| color.write().flip(),
                         "Flip the board"
+                    }
+                }
+
+                // Go back.
+                div {
+                    class: "flex justify-start",
+                    button {
+                        class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded",
+                        onclick: move |_| ChessboardClient::revert_move(),
+                        "Revert last move"
                     }
                 },
             }

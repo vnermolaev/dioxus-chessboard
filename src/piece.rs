@@ -2,11 +2,9 @@ use crate::chessboard::PlayerColor;
 use crate::historical_board::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
 use crate::pieces::compute_piece_img_src;
-use crate::PieceSet;
+use crate::{finalize, PieceSet};
 use dioxus::prelude::*;
-use owlchess::board::PrettyStyle;
 use owlchess::Coord;
-use tracing::debug;
 
 /// Component rendering pieces on [owlchess::Board].
 #[component]
@@ -60,13 +58,7 @@ pub(crate) fn Piece(props: PieceProps) -> Element {
     let class = classes.join(" ");
 
     let ontransitionend = move |_ev| {
-        // Try finalizing the move builder and apply the move.
-        let finalized = move_builder.write().finalize(&board.read());
-        if let Some(m) = finalized {
-            debug!("Applying the move {m:?}");
-            board.write().make_move(m).expect("Move must be valid");
-            debug!("New board\n{}", board.read().pretty(PrettyStyle::Utf8));
-        }
+        finalize(&mut move_builder, &mut board);
     };
 
     rsx! {

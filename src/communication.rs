@@ -6,8 +6,16 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 pub struct ChessboardClient;
 
 impl ChessboardClient {
-    pub fn send(action: Action) {
+    fn send(action: Action) {
         initialize().0.send(action).expect("Must send");
+    }
+
+    pub fn make_move(uci: &str) {
+        Self::send(Action::MakeUciMove(uci.to_string()));
+    }
+
+    pub fn revert_move() {
+        Self::send(Action::RevertMove);
     }
 }
 

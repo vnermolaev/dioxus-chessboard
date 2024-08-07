@@ -14,6 +14,7 @@ pub struct HistoricalBoard {
 }
 
 impl HistoricalBoard {
+    /// Construct a new board from FEN notation.
     pub fn from_fen(fen: &str) -> Result<Self, FenParseError> {
         Board::from_str(fen).map(|board| Self {
             board,
@@ -21,12 +22,27 @@ impl HistoricalBoard {
         })
     }
 
+    /// Tries to apply a [Move] to the inner [Board],
+    /// if successful, pushed the old [Board] and the applied [Move] to history.
     pub fn make_move(&mut self, m: Move) -> Result<(), ValidateError> {
         let new_board = self.board.make_move(m)?;
         self.history
             .push((mem::replace(&mut self.board, new_board), m));
 
         Ok(())
+    }
+
+    pub fn last_move(&self) -> Option<Move> {
+        self.history.last().map(|(_, m)| *m)
+    }
+
+    pub fn revert_last_move(&mut self) -> Option<Move> {
+        if let Some((board, m)) = self.history.pop() {
+            self.board = board;
+            Some(m)
+        } else {
+            None
+        }
     }
 }
 
