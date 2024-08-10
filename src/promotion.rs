@@ -14,7 +14,9 @@ pub(crate) fn Promotion(props: PromotionProperties) -> Element {
     let move_builder = use_context::<Signal<MoveBuilder>>();
 
     // If no promotion, return.
-    let (src, dst) = move_builder.read().check_promotion()?;
+    let Some((src, dst)) = move_builder.read().check_promotion() else {
+        return rsx! {};
+    };
 
     let color = board
         .read()
@@ -91,7 +93,8 @@ fn PromotePiece(props: PromotePieceProps) -> Element {
 
     let cell = Cell::from_parts(props.color, Piece::from(props.piece));
 
-    let src = compute_piece_img_src(props.pieces_set, cell)?;
+    let src = compute_piece_img_src(props.pieces_set, cell)
+        .unwrap_or_else(|| panic!("Cell {cell} must be occupied"));
 
     let piece_container_classes = "flex h-1/4 rounded-full bg-gray-400 justify-center items-center hover:bg-orange-300 transition duration-150 ease-in-out";
     let piece_classes = "h-4/6 hover:scale-125 transition duration-150 ease-in-out";

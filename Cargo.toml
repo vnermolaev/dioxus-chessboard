@@ -18,8 +18,7 @@ name = "showcase"
 path = "example/showcase.rs"
 
 [dependencies]
-dioxus = { version = "0.5.6", features = ["web"] }
-manganis = { git = "https://github.com/DioxusLabs/manganis" }
+dioxus = { git = "https://github.com/DioxusLabs/dioxus.git", features = ["web"] }
 dioxus-logger = "0.5.1"
 tracing = "0.1.40"
 owlchess = "0.4.0"

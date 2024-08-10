@@ -7,8 +7,6 @@ use tracing::{debug, Level};
 #[cfg(feature = "showcase")]
 use futures_util::StreamExt;
 
-const _TAILWIND_URL: &str = manganis::mg!(file("public/tailwind.css"));
-
 fn main() {
     dioxus_logger::init(Level::DEBUG).expect("failed to init logger");
     launch(App);
@@ -55,7 +53,7 @@ fn App() -> Element {
                     label {
                         class: "block text-gray-700 font-semibold",
                         "Pieces' set"
-                    },
+                    }
                     div {
                         class: "flex items-center space-x-4",
                         label {
@@ -69,12 +67,13 @@ fn App() -> Element {
                                 oninput: move |_ev| {
                                     *pieces_set.write() = PieceSet::Standard
                                 }
-                            },
+                            }
                             span {
                                 class: "ml-2 text-gray-700",
                                 "Standard"
                             }
-                        },
+                        }
+
                         label {
                             class: "inline-flex items-center",
                             input {
@@ -85,7 +84,7 @@ fn App() -> Element {
                                 oninput: move |_ev| {
                                     *pieces_set.write() = PieceSet::Funny
                                 }
-                            },
+                            }
                             span {
                                 class: "ml-2 text-gray-700",
                                 "Funny"
@@ -101,7 +100,7 @@ fn App() -> Element {
                         class: "block text-gray-700 font-semibold",
                         r#for: "uci-move",
                         "Inject UCI move"
-                    },
+                    }
                     input {
                         r#type: "text",
                         id: "uci-move",
@@ -143,7 +142,7 @@ fn App() -> Element {
                         onclick: move |_| ChessboardClient::revert_move(),
                         "Revert last move"
                     }
-                },
+                }
             }
         }
     }

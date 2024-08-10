@@ -19,10 +19,13 @@ pub(crate) fn Piece(props: PieceProps) -> Element {
         .map(|(src, dst)| props.coord == src || props.coord == dst)
         .unwrap_or_default()
     {
-        return None;
+        return rsx! {};
     }
 
-    let img_src = compute_piece_img_src(props.pieces_set, board.read().get(props.coord))?;
+    let Some(img_src) = compute_piece_img_src(props.pieces_set, board.read().get(props.coord))
+    else {
+        return rsx! {};
+    };
 
     // Animation.
     let (x, y) = move_builder

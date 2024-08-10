@@ -11,6 +11,9 @@ use owlchess::board::PrettyStyle;
 use owlchess::{Coord, File, Rank};
 use tracing::{debug, info, warn};
 
+/// Classes to render the chessboard.
+const CHESSBOARD_CLASSES: &str = asset!("public/chessboard.css");
+
 /// Component rendering [Chessboard].
 #[component]
 pub fn Chessboard(props: ChessboardProps) -> Element {
@@ -80,12 +83,13 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
     };
 
     rsx! {
-        div{
+        head::Link { rel: "stylesheet", href: CHESSBOARD_CLASSES }
+
+        div {
             class: "relative",
             div {
                 id: "chessboard",
                 class,
-
                 div {
                     class: "chessboard",
                     for r in ranks.iter().cloned() {
@@ -106,7 +110,7 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
                 }
                 Ranks { color: props.color }
                 Files { color: props.color }
-            },
+            }
             Promotion { color: props.color, pieces_set: props.pieces_set }
         }
     }

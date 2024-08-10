@@ -1,12 +1,3 @@
-/// Classes to render the chessboard.
-const _CHESSBOARD_CLASSES: &str = manganis::mg!(file("public/chessboard.css"));
-
-/// Include Tailwind classes.
-///
-/// Ideally, this would use manganis::classes!;
-/// unfortunately, I did not manage to include them this way.
-const _TAILWIND_CLASSES: &str = manganis::mg!(file("public/tailwind.css"));
-
 pub(crate) mod files;
 pub(crate) mod historical_board;
 pub(crate) mod move_builder;

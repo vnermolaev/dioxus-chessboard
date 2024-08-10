@@ -49,6 +49,8 @@ pub(crate) fn compute_piece_img_src(pieces_set: PieceSet, cell: Cell) -> Option<
 
 /// Piece set 1.
 mod standard {
+    use dioxus::prelude::manganis;
+
     /// White pieces.
     pub const PIECE_1_B_WHITE: &str = manganis::mg!(file("public/pieces/standard/b-white.svg"));
     pub const PIECE_1_K_WHITE: &str = manganis::mg!(file("public/pieces/standard/k-white.svg"));
@@ -67,6 +69,8 @@ mod standard {
 }
 /// Pieces set 2.
 mod funny {
+    use dioxus::prelude::manganis;
+
     /// White pieces.
     pub const PIECE_2_B_WHITE: &str = manganis::mg!(file("public/pieces/funny/b-white.svg"));
     pub const PIECE_2_K_WHITE: &str = manganis::mg!(file("public/pieces/funny/k-white.svg"));
