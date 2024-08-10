@@ -26,15 +26,6 @@ reload_html = true
 # which files or dirs will be watcher monitoring
 watch_path = ["src", "public"]
 
-# include `assets` in web platform
-[web.resource]
-
-# CSS style file
-style = ["/tailwind.css"]
-
-# Javascript code file
-script = []
-
 [web.resource.dev]
 
 # Javascript code file

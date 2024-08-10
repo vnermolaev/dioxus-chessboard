@@ -39,7 +39,8 @@ fn App() -> Element {
                 Chessboard {
                     color: color.read().to_owned(),
                     pieces_set:  pieces_set.read().to_owned(),
-                    uci_tx
+                    uci_tx,
+                    position: _promotion
                 }
             }
 

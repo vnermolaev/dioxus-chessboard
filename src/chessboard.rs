@@ -13,6 +13,8 @@ use tracing::{debug, info, warn};
 
 /// Classes to render the chessboard.
 const CHESSBOARD_CLASSES: &str = asset!("public/chessboard.css");
+// Tailwind classes.
+const TAILWIND_CLASSES: &str = asset!("public/tailwind.css");
 
 /// Component rendering [Chessboard].
 #[component]
@@ -84,6 +86,7 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
 
     rsx! {
         head::Link { rel: "stylesheet", href: CHESSBOARD_CLASSES }
+        head::Link { rel: "stylesheet", href: TAILWIND_CLASSES }
 
         div {
             class: "relative",
