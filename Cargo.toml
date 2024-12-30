@@ -18,8 +18,9 @@ name = "showcase"
 path = "example/showcase.rs"
 
 [dependencies]
-dioxus = { git = "https://github.com/DioxusLabs/dioxus.git", features = ["web"] }
-dioxus-logger = "0.5.1"
+#dioxus = { git = "https://github.com/DioxusLabs/dioxus.git", features = ["web"] }
+dioxus = { version = "0.6.1", features = [] }
+dioxus-logger = "0.6.1"
 tracing = "0.1.40"
 owlchess = "0.4.0"
 futures-util = { version = "0.3.30", optional = true }
@@ -27,3 +28,19 @@ tokio = { version = "1.39.2", features = ["sync"] }
 
 [features]
 showcase = ["futures-util"]
+default = ["web"]
+web = ["dioxus/web"]
+desktop = ["dioxus/desktop"]
+mobile = ["dioxus/mobile"]
+
+[profile]
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"

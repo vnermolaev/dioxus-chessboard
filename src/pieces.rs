@@ -1,3 +1,4 @@
+use dioxus::prelude::Asset;
 use funny::*;
 use owlchess::{Cell, Color, Piece};
 use standard::*;
@@ -8,7 +9,7 @@ pub enum PieceSet {
     Funny,
 }
 
-pub(crate) fn compute_piece_img_src(pieces_set: PieceSet, cell: Cell) -> Option<&'static str> {
+pub(crate) fn compute_piece_img_src(pieces_set: PieceSet, cell: Cell) -> Option<Asset> {
     if cell.is_occupied() {
         // Unwraps are safe because the cell is occupied.
         let piece = cell.piece().unwrap();
@@ -49,41 +50,42 @@ pub(crate) fn compute_piece_img_src(pieces_set: PieceSet, cell: Cell) -> Option<
 
 /// Piece set 1.
 mod standard {
-    use dioxus::prelude::manganis;
+    use dioxus::prelude::*;
 
     /// White pieces.
-    pub const PIECE_1_B_WHITE: &str = manganis::mg!(file("public/pieces/standard/b-white.svg"));
-    pub const PIECE_1_K_WHITE: &str = manganis::mg!(file("public/pieces/standard/k-white.svg"));
-    pub const PIECE_1_N_WHITE: &str = manganis::mg!(file("public/pieces/standard/n-white.svg"));
-    pub const PIECE_1_P_WHITE: &str = manganis::mg!(file("public/pieces/standard/p-white.svg"));
-    pub const PIECE_1_Q_WHITE: &str = manganis::mg!(file("public/pieces/standard/q-white.svg"));
-    pub const PIECE_1_R_WHITE: &str = manganis::mg!(file("public/pieces/standard/r-white.svg"));
+    pub const PIECE_1_B_WHITE: Asset = asset!("public/pieces/standard/b-white.svg");
+    pub const PIECE_1_K_WHITE: Asset = asset!("public/pieces/standard/k-white.svg");
+    pub const PIECE_1_N_WHITE: Asset = asset!("public/pieces/standard/n-white.svg");
+    pub const PIECE_1_P_WHITE: Asset = asset!("public/pieces/standard/p-white.svg");
+    pub const PIECE_1_Q_WHITE: Asset = asset!("public/pieces/standard/q-white.svg");
+    pub const PIECE_1_R_WHITE: Asset = asset!("public/pieces/standard/r-white.svg");
 
     ///Black pieces.
-    pub const PIECE_1_B_BLACK: &str = manganis::mg!(file("public/pieces/standard/b-black.svg"));
-    pub const PIECE_1_K_BLACK: &str = manganis::mg!(file("public/pieces/standard/k-black.svg"));
-    pub const PIECE_1_N_BLACK: &str = manganis::mg!(file("public/pieces/standard/n-black.svg"));
-    pub const PIECE_1_P_BLACK: &str = manganis::mg!(file("public/pieces/standard/p-black.svg"));
-    pub const PIECE_1_Q_BLACK: &str = manganis::mg!(file("public/pieces/standard/q-black.svg"));
-    pub const PIECE_1_R_BLACK: &str = manganis::mg!(file("public/pieces/standard/r-black.svg"));
+    pub const PIECE_1_B_BLACK: Asset = asset!("public/pieces/standard/b-black.svg");
+    pub const PIECE_1_K_BLACK: Asset = asset!("public/pieces/standard/k-black.svg");
+    pub const PIECE_1_N_BLACK: Asset = asset!("public/pieces/standard/n-black.svg");
+    pub const PIECE_1_P_BLACK: Asset = asset!("public/pieces/standard/p-black.svg");
+    pub const PIECE_1_Q_BLACK: Asset = asset!("public/pieces/standard/q-black.svg");
+    pub const PIECE_1_R_BLACK: Asset = asset!("public/pieces/standard/r-black.svg");
 }
+
 /// Pieces set 2.
 mod funny {
-    use dioxus::prelude::manganis;
+    use dioxus::prelude::*;
 
     /// White pieces.
-    pub const PIECE_2_B_WHITE: &str = manganis::mg!(file("public/pieces/funny/b-white.svg"));
-    pub const PIECE_2_K_WHITE: &str = manganis::mg!(file("public/pieces/funny/k-white.svg"));
-    pub const PIECE_2_N_WHITE: &str = manganis::mg!(file("public/pieces/funny/n-white.svg"));
-    pub const PIECE_2_P_WHITE: &str = manganis::mg!(file("public/pieces/funny/p-white.svg"));
-    pub const PIECE_2_Q_WHITE: &str = manganis::mg!(file("public/pieces/funny/q-white.svg"));
-    pub const PIECE_2_R_WHITE: &str = manganis::mg!(file("public/pieces/funny/r-white.svg"));
+    pub const PIECE_2_B_WHITE: Asset = asset!("public/pieces/funny/b-white.svg");
+    pub const PIECE_2_K_WHITE: Asset = asset!("public/pieces/funny/k-white.svg");
+    pub const PIECE_2_N_WHITE: Asset = asset!("public/pieces/funny/n-white.svg");
+    pub const PIECE_2_P_WHITE: Asset = asset!("public/pieces/funny/p-white.svg");
+    pub const PIECE_2_Q_WHITE: Asset = asset!("public/pieces/funny/q-white.svg");
+    pub const PIECE_2_R_WHITE: Asset = asset!("public/pieces/funny/r-white.svg");
 
     /// Black pieces.
-    pub const PIECE_2_B_BLACK: &str = manganis::mg!(file("public/pieces/funny/b-black.svg"));
-    pub const PIECE_2_K_BLACK: &str = manganis::mg!(file("public/pieces/funny/k-black.svg"));
-    pub const PIECE_2_N_BLACK: &str = manganis::mg!(file("public/pieces/funny/n-black.svg"));
-    pub const PIECE_2_P_BLACK: &str = manganis::mg!(file("public/pieces/funny/p-black.svg"));
-    pub const PIECE_2_Q_BLACK: &str = manganis::mg!(file("public/pieces/funny/q-black.svg"));
-    pub const PIECE_2_R_BLACK: &str = manganis::mg!(file("public/pieces/funny/r-black.svg"));
+    pub const PIECE_2_B_BLACK: Asset = asset!("public/pieces/funny/b-black.svg");
+    pub const PIECE_2_K_BLACK: Asset = asset!("public/pieces/funny/k-black.svg");
+    pub const PIECE_2_N_BLACK: Asset = asset!("public/pieces/funny/n-black.svg");
+    pub const PIECE_2_P_BLACK: Asset = asset!("public/pieces/funny/p-black.svg");
+    pub const PIECE_2_Q_BLACK: Asset = asset!("public/pieces/funny/q-black.svg");
+    pub const PIECE_2_R_BLACK: Asset = asset!("public/pieces/funny/r-black.svg");
 }

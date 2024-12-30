@@ -3,7 +3,7 @@ use crate::move_builder::promotion::Promotion;
 use crate::move_builder::MoveAction;
 use owlchess::board::PrettyStyle;
 use owlchess::moves::{uci, PromotePiece};
-use owlchess::{Board, Color, Coord, File, Move, MoveKind, Piece, Rank};
+use owlchess::{Board, Color, Coord, File, Move, Piece, Rank};
 use tracing::{debug, warn};
 
 /// Builder for [Move] structured as a [State] machine:
@@ -43,11 +43,6 @@ use tracing::{debug, warn};
 pub enum State {
     None,
     Src(Coord),
-    Move {
-        m: Move,
-        /// Supporting animation.
-        support: Vec<(Coord, Coord)>,
-    },
     Promotion(Promotion),
     ApplicableMove(ApplicableMove),
 }
@@ -60,7 +55,6 @@ impl State {
     pub(crate) fn src(&self) -> Option<Coord> {
         match self {
             Self::Src(src) => Some(*src),
-            Self::Move { m, .. } => Some(m.src()),
             Self::Promotion(manual) => Some(manual.src()),
             Self::ApplicableMove(m) => Some(m.src()),
             _ => None,
@@ -70,7 +64,6 @@ impl State {
     #[allow(dead_code)] // Maybe used in the future.
     pub(crate) fn dst(&self) -> Option<Coord> {
         match self {
-            Self::Move { m, .. } => Some(m.dst()),
             Self::Promotion(manual) => Some(manual.dst()),
             Self::ApplicableMove(m) => Some(m.dst()),
             _ => None,
@@ -133,34 +126,7 @@ impl State {
                     // Verify the legality of the move.
                     match Move::from_uci_legal(&uci, board) {
                         Ok(m) if !is_promo_required => {
-                            fn coord(f: File, r: Rank) -> Coord {
-                                Coord::from_parts(f, r)
-                            }
-
-                            // Compute supporting animations.
-                            let support = match m.kind() {
-                                MoveKind::CastlingKingside => {
-                                    // King steps from the E to G file.
-                                    // Rook steps from the H to F file.
-                                    let rank = m.src().rank();
-                                    vec![
-                                        (coord(File::E, rank), coord(File::G, rank)),
-                                        (coord(File::H, rank), coord(File::F, rank)),
-                                    ]
-                                }
-                                MoveKind::CastlingQueenside => {
-                                    // King steps from the E to C file.
-                                    // Rook steps from the A to D file.
-                                    let rank = m.src().rank();
-                                    vec![
-                                        (coord(File::E, rank), coord(File::C, rank)),
-                                        (coord(File::A, rank), coord(File::D, rank)),
-                                    ]
-                                }
-                                _ => vec![(m.src(), m.dst())],
-                            };
-
-                            Self::Move { m, support }
+                            Self::ApplicableMove(ApplicableMove::Manual(m))
                         }
                         Ok(_) => Self::Promotion(Promotion::PrePromotion { src, dst }),
                         Err(_) => {
@@ -239,7 +205,6 @@ impl State {
 
     pub(crate) fn animations(&self) -> Vec<(Coord, Coord)> {
         match self {
-            Self::Move { support, .. } => support.clone(),
             Self::Promotion(promotion) => promotion.animations(),
             Self::ApplicableMove(applicable_move) => applicable_move.animations(),
             _ => vec![],
@@ -264,11 +229,6 @@ impl State {
                 };
                 *self = Self::None;
                 action
-            }
-            Self::Move { m, .. } => {
-                let m = *m;
-                *self = Self::None;
-                MoveAction::Apply(m)
             }
             _ => MoveAction::None,
         }

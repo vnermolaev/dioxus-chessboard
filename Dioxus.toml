@@ -3,28 +3,19 @@
 # App (Project) Name
 name = "dioxus-chessboard"
 
-# Dioxus App Default Platform
-# desktop, web
-default_platform = "web"
-
-# `build` & `serve` dist path
-out_dir = "dist"
-
-# resource (assets) file folder
-# asset_dir = "assets"
-
 [web.app]
 
 # HTML title tag content
 title = "dioxus-chessboard"
 
-[web.watcher]
+# include `assets` in web platform
+[web.resource]
 
-# when watcher trigger, regenerate the `index.html`
-reload_html = true
+# Additional CSS style files
+style = []
 
-# which files or dirs will be watcher monitoring
-watch_path = ["src", "public"]
+# Additional JavaScript files
+script = []
 
 [web.resource.dev]
 
