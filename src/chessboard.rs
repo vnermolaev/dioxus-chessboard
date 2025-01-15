@@ -1,4 +1,3 @@
-use crate::communication::get_chessboard_receiver;
 use crate::files::Files;
 use crate::historical_board::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
@@ -9,6 +8,9 @@ use crate::PieceSet;
 use dioxus::prelude::*;
 use owlchess::board::PrettyStyle;
 use owlchess::{Coord, File, Rank};
+use std::fmt::{Debug, Formatter};
+use std::sync::atomic::AtomicU32;
+use std::sync::atomic::Ordering::Relaxed;
 use tracing::{debug, info, warn};
 
 /// Classes to render the chessboard.
@@ -20,6 +22,7 @@ const TAILWIND_CLASSES: Asset = asset!("public/tailwind.css");
 #[component]
 pub fn Chessboard(props: ChessboardProps) -> Element {
     let props = props.complete();
+    debug!("{props:?}");
 
     use_context_provider(|| {
         Signal::new(
@@ -30,39 +33,12 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
 
     use_context_provider(|| Signal::new(MoveBuilder::new(props.uci_tx)));
 
+    if let Some(unique_action) = props.action {
+        maybe_update_board(unique_action);
+    }
+
     let board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
-
-    // Spawn processing of injected actions.
-    if let Some(mut rx) = get_chessboard_receiver() {
-        debug!("Initializing chessboard message loop");
-        spawn(async move {
-            while let Some(action) = rx.recv().await {
-                debug!("Chessboard must act: {action:?}");
-                match action {
-                    Action::MakeUciMove(uci) => {
-                        let board = board.read();
-
-                        if move_builder.write().apply_uci_move(&uci, &board).is_ok() {
-                            info!("Injected move: {uci}");
-                        } else {
-                            warn!(
-                                "Injected move {uci} is not legal in the current position\n{}",
-                                board.pretty(PrettyStyle::Utf8)
-                            );
-                        }
-                    }
-                    Action::RevertMove => {
-                        let Some(m) = board.read().last_move() else {
-                            continue;
-                        };
-
-                        move_builder.write().revert_move(m);
-                    }
-                }
-            }
-        });
-    }
 
     let (files, ranks) = match props.color {
         PlayerColor::White => (
@@ -117,6 +93,41 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
     }
 }
 
+/// Examine [UniqueAction] and apply respective changes if the action has not yet been processed.
+/// If the action was processed, does nothing.
+fn maybe_update_board(unique_action: UniqueAction) {
+    let processed_action = PROCESSED_ACTION.load(Relaxed);
+    if processed_action == unique_action.discriminator {
+        return;
+    }
+
+    debug!("Chessboard must act: {unique_action:?}");
+    PROCESSED_ACTION.store(unique_action.discriminator, Relaxed);
+
+    let board = use_context::<Signal<HistoricalBoard>>();
+    let mut move_builder = use_context::<Signal<MoveBuilder>>();
+
+    match unique_action.action {
+        ActionInner::MakeUciMove(uci) => {
+            let board = board.read();
+
+            if move_builder.write().apply_uci_move(&uci, &board).is_ok() {
+                info!("Injected move: {uci}");
+            } else {
+                warn!(
+                    "Injected move {uci} is not legal in the current position\n{}",
+                    board.pretty(PrettyStyle::Utf8)
+                );
+            }
+        }
+        ActionInner::RevertMove => {
+            if let Some(m) = board.read().last_move() {
+                move_builder.write().revert_move(m);
+            }
+        }
+    }
+}
+
 /// [Chessboard] properties.
 #[derive(PartialEq, Props, Clone)]
 pub struct ChessboardProps {
@@ -126,13 +137,48 @@ pub struct ChessboardProps {
     position: Option<String>,
     /// Pieces set.
     pieces_set: Option<PieceSet>,
+    /// Injected action.
+    action: Option<Action>,
     /// Transmitter channel of moves made on the board.
     uci_tx: Option<Coroutine<String>>,
 }
 
-#[derive(Debug)]
+/// Action counter to make every [ActionInner] unique, i.e., [UniqueAction].
+static NEXT_ACTION: AtomicU32 = AtomicU32::new(0);
+
+/// Keeps track which injected [UniqueAction]'s have been processed.
+/// At initialization, this value must be different from the one in [NEXT_ACTION].
+static PROCESSED_ACTION: AtomicU32 = AtomicU32::new(1);
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Action(UniqueAction);
+
+impl Action {
+    pub fn make_move(m: &str) -> Self {
+        Self(UniqueAction {
+            discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
+            action: ActionInner::MakeUciMove(m.to_string()),
+        })
+    }
+
+    pub fn revert_move() -> Action {
+        Self(UniqueAction {
+            discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
+            action: ActionInner::RevertMove,
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct UniqueAction {
+    /// Value allowing to discriminate instances of this variant.
+    discriminator: u32,
+    action: ActionInner,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 /// List of action [Chessboard] can receive via its client.
-pub(crate) enum Action {
+pub(crate) enum ActionInner {
     MakeUciMove(String),
     RevertMove,
 }
@@ -143,7 +189,19 @@ struct CompleteChessboardProps {
     /// Starting position in FEN notation.
     position: String,
     pieces_set: PieceSet,
+    action: Option<UniqueAction>,
     uci_tx: Option<Coroutine<String>>,
+}
+
+impl Debug for CompleteChessboardProps {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CompleteChessboardProps")
+            .field("color", &self.color)
+            .field("position", &self.position)
+            .field("pieces_set", &self.pieces_set)
+            .field("action", &self.action)
+            .finish()
+    }
 }
 
 impl ChessboardProps {
@@ -154,6 +212,7 @@ impl ChessboardProps {
                 .position
                 .unwrap_or_else(|| Self::default_position().to_string()),
             pieces_set: self.pieces_set.unwrap_or(PieceSet::Standard),
+            action: self.action.map(|a| a.0),
             uci_tx: self.uci_tx,
         }
     }

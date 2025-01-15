@@ -6,10 +6,7 @@ pub(crate) mod promotion;
 pub(crate) mod ranks;
 
 mod chessboard;
-pub use chessboard::{Chessboard, ChessboardProps, PlayerColor};
-
-mod communication;
-pub use communication::ChessboardClient;
+pub use chessboard::{Action, Chessboard, ChessboardProps, PlayerColor};
 
 mod pieces;
 pub use pieces::PieceSet;

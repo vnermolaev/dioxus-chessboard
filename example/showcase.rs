@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 use dioxus::prelude::*;
-use dioxus_chessboard::{Chessboard, ChessboardClient, PieceSet, PlayerColor};
+use dioxus_chessboard::{Action, Chessboard, PieceSet, PlayerColor};
 use tracing::{debug, Level};
 
 #[cfg(feature = "showcase")]
@@ -16,6 +16,7 @@ fn main() {
 fn App() -> Element {
     let mut color = use_signal(|| PlayerColor::White);
     let mut pieces_set = use_signal(|| PieceSet::Standard);
+    let mut action = use_signal(|| None);
     let mut uci_content = use_signal(|| "".to_string());
 
     let _castling =
@@ -39,8 +40,8 @@ fn App() -> Element {
                 Chessboard {
                     color: color.read().to_owned(),
                     pieces_set:  pieces_set.read().to_owned(),
+                    action: action.read().to_owned(),
                     uci_tx,
-                    position: _promotion
                 }
             }
 
@@ -114,7 +115,7 @@ fn App() -> Element {
                             if ev.key() == Key::Enter {
                                 let value = uci_content.read().to_owned();
                                 debug!("{value}");
-                                ChessboardClient::make_move(&value);
+                                *action.write() = Some(Action::make_move(&value));
                             }
                         }
                     }
@@ -140,7 +141,9 @@ fn App() -> Element {
                     class: "flex justify-start",
                     button {
                         class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded",
-                        onclick: move |_| ChessboardClient::revert_move(),
+                        onclick: move |_| {
+                            *action.write() = Some(Action::revert_move());
+                        },
                         "Revert last move"
                     }
                 }

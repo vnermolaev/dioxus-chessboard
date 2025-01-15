@@ -18,13 +18,11 @@ name = "showcase"
 path = "example/showcase.rs"
 
 [dependencies]
-#dioxus = { git = "https://github.com/DioxusLabs/dioxus.git", features = ["web"] }
-dioxus = { version = "0.6.1", features = [] }
+dioxus = { version = "0.6.1", features = ["web"] }
 dioxus-logger = "0.6.1"
 tracing = "0.1.40"
 owlchess = "0.4.0"
 futures-util = { version = "0.3.30", optional = true }
-tokio = { version = "1.39.2", features = ["sync"] }
 
 [features]
 showcase = ["futures-util"]
