@@ -70,8 +70,7 @@ pub(crate) fn Promotion(props: PromotionProperties) -> Element {
     };
 
     rsx! {
-        div {
-            class: promotion_container_classes,
+        div { class: promotion_container_classes,
             for piece in pieces {
                 PromotePiece { color, piece, pieces_set: props.pieces_set }
             }
@@ -108,13 +107,8 @@ fn PromotePiece(props: PromotePieceProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: piece_container_classes,
-            img {
-                class: piece_classes,
-                src,
-                onclick
-            }
+        div { class: piece_container_classes,
+            img { class: piece_classes, src, onclick }
         }
     }
 }

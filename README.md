@@ -23,6 +23,7 @@ that can be integrated into any web application built with Dioxus.
 
 - Compile the styles
   ``` bash
+  npm install tailwindcss @tailwindcss/cli
   npx tailwindcss -i ./input.css -o ./public/tailwind.css --watch
   ```
 

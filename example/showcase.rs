@@ -16,6 +16,7 @@ fn main() {
 fn App() -> Element {
     let mut color = use_signal(|| PlayerColor::White);
     let mut pieces_set = use_signal(|| PieceSet::Standard);
+    let mut is_interactive = use_signal(|| false);
     let mut action = use_signal(|| None);
     let mut uci_content = use_signal(|| "".to_string());
 
@@ -31,73 +32,82 @@ fn App() -> Element {
     });
 
     rsx! {
-        div {
-            class: "bg-gray-100 flex w-full space-x-4 min-h-screen",
+        div { class: "bg-gray-100 flex w-full space-x-4 min-h-screen",
 
             // Chessboard.
-            div {
-                class: "w-1/3 h-1/3 border border-black",
+            div { class: "w-1/3 h-1/3 border border-black",
                 Chessboard {
+                    is_interactive: is_interactive.read().to_owned(),
                     color: color.read().to_owned(),
-                    pieces_set:  pieces_set.read().to_owned(),
+                    pieces_set: pieces_set.read().to_owned(),
                     action: action.read().to_owned(),
                     uci_tx,
                 }
             }
 
             // Controls.
-            div {
-                class: "bg-white p-6 rounded-lg shadow-lg w-1/3 h-1/3 space-y-4",
+            div { class: "bg-white p-6 rounded-lg shadow-lg w-1/3 h-1/3 space-y-4",
 
                 // Pieces' Set Radio Input
-                div {
-                    class: "space-y-2 border border-gray-300 rounded-lg p-2",
-                    label {
-                        class: "block text-gray-700 font-semibold",
-                        "Pieces' set"
-                    }
-                    div {
-                        class: "flex items-center space-x-4",
-                        label {
-                            class: "inline-flex items-center",
+                div { class: "space-y-2 border border-gray-300 rounded-lg p-2",
+                    label { class: "block text-gray-700 font-semibold", "Pieces' set" }
+                    div { class: "flex items-center space-x-4",
+                        label { class: "inline-flex items-center",
                             input {
                                 r#type: "radio",
                                 class: "form-radio text-blue-500",
                                 name: "pieces-set",
                                 value: "standard",
                                 checked: true,
-                                oninput: move |_ev| {
-                                    *pieces_set.write() = PieceSet::Standard
-                                }
+                                oninput: move |_ev| { *pieces_set.write() = PieceSet::Standard },
                             }
-                            span {
-                                class: "ml-2 text-gray-700",
-                                "Standard"
-                            }
+                            span { class: "ml-2 text-gray-700", "Standard" }
                         }
 
-                        label {
-                            class: "inline-flex items-center",
+                        label { class: "inline-flex items-center",
                             input {
                                 r#type: "radio",
                                 class: "form-radio text-blue-500",
                                 name: "pieces-set",
                                 value: "funny",
-                                oninput: move |_ev| {
-                                    *pieces_set.write() = PieceSet::Funny
-                                }
+                                oninput: move |_ev| { *pieces_set.write() = PieceSet::Funny },
                             }
-                            span {
-                                class: "ml-2 text-gray-700",
-                                "Funny"
+                            span { class: "ml-2 text-gray-700", "Funny" }
+                        }
+                    }
+                }
+
+                 // Interactivity Radio Input
+                div { class: "space-y-2 border border-gray-300 rounded-lg p-2",
+                    label { class: "block text-gray-700 font-semibold", "Interactivity" }
+                    div { class: "flex items-center space-x-4",
+                        label { class: "inline-flex items-center",
+                            input {
+                                r#type: "radio",
+                                class: "form-radio text-blue-500",
+                                name: "interactive",
+                                value: "false",
+                                checked: true,
+                                oninput: move |_ev| { *is_interactive.write() = false },
                             }
+                            span { class: "ml-2 text-gray-700", "False" }
+                        }
+
+                        label { class: "inline-flex items-center",
+                            input {
+                                r#type: "radio",
+                                class: "form-radio text-blue-500",
+                                name: "interactive",
+                                value: "true",
+                                oninput: move |_ev| { *is_interactive.write() = true },
+                            }
+                            span { class: "ml-2 text-gray-700", "True" }
                         }
                     }
                 }
 
                 // Inject UCI Move Text Input
-                div {
-                    class: "space-y-2 border border-gray-300 rounded-lg p-2",
+                div { class: "space-y-2 border border-gray-300 rounded-lg p-2",
                     label {
                         class: "block text-gray-700 font-semibold",
                         r#for: "uci-move",
@@ -117,18 +127,14 @@ fn App() -> Element {
                                 debug!("{value}");
                                 *action.write() = Some(Action::make_move(&value));
                             }
-                        }
+                        },
                     }
                     // Hint Text
-                    p {
-                        class: "text-gray-500 text-sm",
-                        "Try a popular first move \"e2e4\""
-                    }
+                    p { class: "text-gray-500 text-sm", "Try a popular first move \"e2e4\"" }
                 }
 
                 // Flip the Board Button
-                div {
-                    class: "flex justify-start",
+                div { class: "flex justify-start",
                     button {
                         class: "bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
                         onclick: move |_| color.write().flip(),
@@ -137,8 +143,7 @@ fn App() -> Element {
                 }
 
                 // Go back.
-                div {
-                    class: "flex justify-start",
+                div { class: "flex justify-start",
                     button {
                         class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded",
                         onclick: move |_| {

@@ -17,13 +17,26 @@ pub(crate) fn Files(props: FilesProps) -> Element {
             for file in files {
                 div {
                     class: "pointer-events-none pl-1 w-1/8",
-                    style: format!("color: {}",
+                    style: format!(
+                        "color: {}",
                         match props.color {
-                            PlayerColor::White => if file.index() % 2 == 0 { "var(--color-dark)" } else { "var(--color-light)"},
-                            PlayerColor::Black => if file.index() % 2 == 0 { "var(--color-light)"} else  { "var(--color-dark)" },
-                        }
+                            PlayerColor::White => {
+                                if file.index() % 2 == 0 {
+                                    "var(--color-dark)"
+                                } else {
+                                    "var(--color-light)"
+                                }
+                            }
+                            PlayerColor::Black => {
+                                if file.index() % 2 == 0 {
+                                    "var(--color-light)"
+                                } else {
+                                    "var(--color-dark)"
+                                }
+                            }
+                        },
                     ),
-                    { file.to_string() }
+                    {file.to_string()}
                 }
             }
         }

@@ -17,13 +17,26 @@ pub(crate) fn Ranks(props: RanksProps) -> Element {
             for rank in ranks {
                 div {
                     class: "pointer-events-none pr-1 h-1/8",
-                    style: format!("color: {}",
+                    style: format!(
+                        "color: {}",
                         match props.color {
-                            PlayerColor::White => if rank.index() % 2 == 0 { "var(--color-dark)" } else { "var(--color-light)"},
-                            PlayerColor::Black => if rank.index() % 2 == 0 { "var(--color-light)"} else  { "var(--color-dark)" },
-                        }
+                            PlayerColor::White => {
+                                if rank.index() % 2 == 0 {
+                                    "var(--color-dark)"
+                                } else {
+                                    "var(--color-light)"
+                                }
+                            }
+                            PlayerColor::Black => {
+                                if rank.index() % 2 == 0 {
+                                    "var(--color-light)"
+                                } else {
+                                    "var(--color-dark)"
+                                }
+                            }
+                        },
                     ),
-                    { rank.to_string() }
+                    {rank.to_string()}
                 }
             }
         }

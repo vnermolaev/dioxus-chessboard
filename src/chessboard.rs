@@ -33,8 +33,8 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
 
     use_context_provider(|| Signal::new(MoveBuilder::new(props.uci_tx)));
 
-    if let Some(unique_action) = props.action {
-        maybe_update_board(unique_action);
+    if let Some(action) = props.action {
+        maybe_update_board(action, props.is_interactive);
     }
 
     let board = use_context::<Signal<HistoricalBoard>>();
@@ -62,24 +62,22 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
         document::Link { rel: "stylesheet", href: CHESSBOARD_CLASSES }
         document::Link { rel: "stylesheet", href: TAILWIND_CLASSES }
 
-        div {
-            class: "relative",
-            div {
-                id: "chessboard",
-                class,
-                div {
-                    class: "chessboard",
+        div { class: "relative",
+            div { id: "chessboard", class,
+                div { class: "chessboard",
                     for r in ranks.iter().cloned() {
                         for f in files.iter().cloned() {
                             div {
                                 id: format!("{f}{r}"),
                                 onclick: move |_ev| {
-                                    move_builder.write().put_square(f, r, &board.read());
+                                    // if props.is_interactive {
+                                        move_builder.write().put_square(f, r, &board.read());
+                                    // }
                                 },
                                 Piece {
                                     coord: Coord::from_parts(f, r),
                                     color: props.color,
-                                    pieces_set: props.pieces_set
+                                    pieces_set: props.pieces_set,
                                 }
                             }
                         }
@@ -93,21 +91,26 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
     }
 }
 
-/// Examine [UniqueAction] and apply respective changes if the action has not yet been processed.
+/// Examine [Action] and apply respective changes if the action has not yet been processed.
 /// If the action was processed, does nothing.
-fn maybe_update_board(unique_action: UniqueAction) {
+/// If the board is not interactive, mark the action as processed.
+fn maybe_update_board(action: Action, is_interactive: bool) {
     let processed_action = PROCESSED_ACTION.load(Relaxed);
-    if processed_action == unique_action.discriminator {
+    if processed_action == action.discriminator {
+        return;
+    }
+    PROCESSED_ACTION.store(action.discriminator, Relaxed);
+
+    if !is_interactive {
         return;
     }
 
-    debug!("Chessboard must act: {unique_action:?}");
-    PROCESSED_ACTION.store(unique_action.discriminator, Relaxed);
+    debug!("Chessboard must act: {action:?}");
 
     let board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
 
-    match unique_action.action {
+    match action.action {
         ActionInner::MakeUciMove(uci) => {
             let board = board.read();
 
@@ -131,6 +134,10 @@ fn maybe_update_board(unique_action: UniqueAction) {
 /// [Chessboard] properties.
 #[derive(PartialEq, Props, Clone)]
 pub struct ChessboardProps {
+    /// Is the board interactive?
+    /// If you only need to display a position, set this to false.
+    /// By default, the board will be interactive.
+    is_interactive: Option<bool>,
     /// Color the player plays for, i.e., pieces at the bottom.
     color: PlayerColor,
     /// Starting position in FEN notation.
@@ -151,29 +158,26 @@ static NEXT_ACTION: AtomicU32 = AtomicU32::new(0);
 static PROCESSED_ACTION: AtomicU32 = AtomicU32::new(1);
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Action(UniqueAction);
-
-impl Action {
-    pub fn make_move(m: &str) -> Self {
-        Self(UniqueAction {
-            discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
-            action: ActionInner::MakeUciMove(m.to_string()),
-        })
-    }
-
-    pub fn revert_move() -> Action {
-        Self(UniqueAction {
-            discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
-            action: ActionInner::RevertMove,
-        })
-    }
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct UniqueAction {
+pub struct Action {
     /// Value allowing to discriminate instances of this variant.
     discriminator: u32,
     action: ActionInner,
+}
+
+impl Action {
+    pub fn make_move(m: &str) -> Self {
+        Self {
+            discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
+            action: ActionInner::MakeUciMove(m.to_string()),
+        }
+    }
+
+    pub fn revert_move() -> Action {
+        Self {
+            discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
+            action: ActionInner::RevertMove,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -185,17 +189,19 @@ pub(crate) enum ActionInner {
 
 /// Complete properties with absent optional values of [ChessboardProps] filled with default values.
 struct CompleteChessboardProps {
+    is_interactive: bool,
     color: PlayerColor,
     /// Starting position in FEN notation.
     position: String,
     pieces_set: PieceSet,
-    action: Option<UniqueAction>,
+    action: Option<Action>,
     uci_tx: Option<Coroutine<String>>,
 }
 
 impl Debug for CompleteChessboardProps {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("CompleteChessboardProps")
+            .field("is_interactive", &self.is_interactive)
             .field("color", &self.color)
             .field("position", &self.position)
             .field("pieces_set", &self.pieces_set)
@@ -207,12 +213,13 @@ impl Debug for CompleteChessboardProps {
 impl ChessboardProps {
     fn complete(self) -> CompleteChessboardProps {
         CompleteChessboardProps {
+            is_interactive: self.is_interactive.unwrap_or(true),
             color: self.color,
             position: self
                 .position
                 .unwrap_or_else(|| Self::default_position().to_string()),
             pieces_set: self.pieces_set.unwrap_or(PieceSet::Standard),
-            action: self.action.map(|a| a.0),
+            action: self.action,
             uci_tx: self.uci_tx,
         }
     }
