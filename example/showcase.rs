@@ -32,7 +32,6 @@ fn App() -> Element {
     });
 
     rsx! {
-        // div { class: "bg-gray-100 flex w-full space-x-4 min-h-screen",
         div { class: "flex w-full space-x-4 min-h-screen",
 
             // Chessboard.
