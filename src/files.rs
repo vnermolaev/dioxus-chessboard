@@ -22,16 +22,16 @@ pub(crate) fn Files(props: FilesProps) -> Element {
                         match props.color {
                             PlayerColor::White => {
                                 if file.index() % 2 == 0 {
-                                    "var(--color-dark)"
-                                } else {
                                     "var(--color-light)"
+                                } else {
+                                    "var(--color-dark)"
                                 }
                             }
                             PlayerColor::Black => {
                                 if file.index() % 2 == 0 {
-                                    "var(--color-light)"
-                                } else {
                                     "var(--color-dark)"
+                                } else {
+                                    "var(--color-light)"
                                 }
                             }
                         },

@@ -4,6 +4,7 @@ use crate::move_builder::MoveBuilder;
 use crate::piece::Piece;
 use crate::promotion::Promotion;
 use crate::ranks::Ranks;
+use crate::square::Square;
 use crate::PieceSet;
 use dioxus::prelude::*;
 use owlchess::board::PrettyStyle;
@@ -63,30 +64,23 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
         document::Link { rel: "stylesheet", href: TAILWIND_CLASSES }
 
         div { class: "relative",
-            div { id: "chessboard", class,
-                div { class: "chessboard",
-                    for r in ranks.iter().cloned() {
+            // div { class: "chessboard bg-slate-200",
+            div { class: "chessboard",
+                for r in ranks.iter().cloned() {
+                    div { class: "row",
                         for f in files.iter().cloned() {
-                            div {
-                                id: format!("{f}{r}"),
-                                onclick: move |_ev| {
-                                    // if props.is_interactive {
-                                        move_builder.write().put_square(f, r, &board.read());
-                                    // }
-                                },
-                                Piece {
-                                    coord: Coord::from_parts(f, r),
-                                    color: props.color,
-                                    pieces_set: props.pieces_set,
-                                }
+                            Square {
+                                is_interactive: props.is_interactive,
+                                coord: Coord::from_parts(f, r),
+                                color: props.color,
+                                pieces_set: props.pieces_set,
                             }
                         }
                     }
                 }
-                Ranks { color: props.color }
-                Files { color: props.color }
             }
-            Promotion { color: props.color, pieces_set: props.pieces_set }
+            Ranks { color: props.color }
+            Files { color: props.color }
         }
     }
 }

@@ -16,7 +16,7 @@ fn main() {
 fn App() -> Element {
     let mut color = use_signal(|| PlayerColor::White);
     let mut pieces_set = use_signal(|| PieceSet::Standard);
-    let mut is_interactive = use_signal(|| false);
+    let mut is_interactive = use_signal(|| true);
     let mut action = use_signal(|| None);
     let mut uci_content = use_signal(|| "".to_string());
 
@@ -32,7 +32,8 @@ fn App() -> Element {
     });
 
     rsx! {
-        div { class: "bg-gray-100 flex w-full space-x-4 min-h-screen",
+        // div { class: "bg-gray-100 flex w-full space-x-4 min-h-screen",
+        div { class: "flex w-full space-x-4 min-h-screen",
 
             // Chessboard.
             div { class: "w-1/3 h-1/3 border border-black",
@@ -77,7 +78,7 @@ fn App() -> Element {
                     }
                 }
 
-                 // Interactivity Radio Input
+                // Interactivity Radio Input
                 div { class: "space-y-2 border border-gray-300 rounded-lg p-2",
                     label { class: "block text-gray-700 font-semibold", "Interactivity" }
                     div { class: "flex items-center space-x-4",
@@ -87,7 +88,6 @@ fn App() -> Element {
                                 class: "form-radio text-blue-500",
                                 name: "interactive",
                                 value: "false",
-                                checked: true,
                                 oninput: move |_ev| { *is_interactive.write() = false },
                             }
                             span { class: "ml-2 text-gray-700", "False" }
@@ -99,6 +99,7 @@ fn App() -> Element {
                                 class: "form-radio text-blue-500",
                                 name: "interactive",
                                 value: "true",
+                                checked: true,
                                 oninput: move |_ev| { *is_interactive.write() = true },
                             }
                             span { class: "ml-2 text-gray-700", "True" }
