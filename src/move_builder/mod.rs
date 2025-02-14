@@ -2,7 +2,7 @@ use crate::move_builder::state::State;
 use crate::PlayerColor;
 use dioxus::prelude::Coroutine;
 use owlchess::moves::{uci, PromotePiece, Style};
-use owlchess::{Board, Coord, File, Move, Rank};
+use owlchess::{Board, Coord, Move};
 use std::ops::{Deref, DerefMut};
 
 mod applicable_move;
@@ -45,11 +45,6 @@ impl MoveBuilder {
     #[allow(dead_code)] // Maybe used in the future.
     pub fn dst(&self) -> Option<Coord> {
         self.deref().dst()
-    }
-
-    /// Puts a square into [State].
-    pub fn put_square(&mut self, file: File, rank: Rank, board: &Board) {
-        self.put_square_coord(Coord::from_parts(file, rank), board)
     }
 
     /// Puts a square into [State].

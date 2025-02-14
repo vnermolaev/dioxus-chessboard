@@ -58,3 +58,42 @@
 .chessboard > * > * {
     position: relative;
 }
+
+/* Extra sizes */
+
+.w-1\/8 {
+    width: 12.5%;
+}
+
+.h-1\/8 {
+    height: 12.5%;
+}
+
+/* Left alignment */
+.left-1\/8 {
+    left: 12.5%
+}
+
+.left-2\/8 {
+    left: 25%
+}
+
+.left-3\/8 {
+    left: 37.5%
+}
+
+.left-4\/8 {
+    left: 50%
+}
+
+.left-5\/8 {
+    left: 62.5%
+}
+
+.left-6\/8 {
+    left: 75%
+}
+
+.left-7\/8 {
+    left: 87.5%
+}
