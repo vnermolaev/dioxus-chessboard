@@ -2,7 +2,7 @@ use crate::move_builder::state::State;
 use crate::PlayerColor;
 use dioxus::prelude::Coroutine;
 use owlchess::moves::{uci, PromotePiece, Style};
-use owlchess::{Board, Color, Coord, File, Move, Rank};
+use owlchess::{Board, Coord, File, Move, Rank};
 use std::ops::{Deref, DerefMut};
 
 mod applicable_move;

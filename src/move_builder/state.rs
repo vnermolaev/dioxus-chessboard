@@ -84,10 +84,6 @@ impl State {
     }
 
     /// Puts a square into [State].
-    pub(crate) fn put_square(&mut self, file: File, rank: Rank, board: &Board) {
-        self.put_square_coord(Coord::from_parts(file, rank), board);
-    }
-    /// Puts a square into [State].
     pub(crate) fn put_square_coord(&mut self, coord: Coord, board: &Board) {
         *self = match self {
             // Start building a move by selecting a piece.

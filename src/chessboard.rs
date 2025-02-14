@@ -1,7 +1,6 @@
 use crate::files::Files;
 use crate::historical_board::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
-use crate::piece::Piece;
 use crate::promotion::Promotion;
 use crate::ranks::Ranks;
 use crate::square::Square;
@@ -38,8 +37,7 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
         maybe_update_board(action, props.is_interactive);
     }
 
-    let board = use_context::<Signal<HistoricalBoard>>();
-    let mut move_builder = use_context::<Signal<MoveBuilder>>();
+    let move_builder = use_context::<Signal<MoveBuilder>>();
 
     let (files, ranks) = match props.color {
         PlayerColor::White => (
@@ -64,7 +62,6 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
         document::Link { rel: "stylesheet", href: TAILWIND_CLASSES }
 
         div { class: "relative",
-            // div { class: "chessboard bg-slate-200",
             div { class: "chessboard",
                 for r in ranks.iter().cloned() {
                     div { class: "row",
@@ -81,6 +78,7 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
             }
             Ranks { color: props.color }
             Files { color: props.color }
+            Promotion { color: props.color, pieces_set: props.pieces_set }
         }
     }
 }

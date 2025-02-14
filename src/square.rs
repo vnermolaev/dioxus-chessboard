@@ -21,7 +21,7 @@ pub(crate) fn Square(props: SquareProps) -> Element {
         div {
             id: format!("{}", props.coord),
             class: if is_selected { "move-source" },
-            onclick:  move |_ev| {
+            onclick: move |_ev| {
                 if props.is_interactive {
                     move_builder.write().put_square_coord(props.coord, &board.read());
                 }

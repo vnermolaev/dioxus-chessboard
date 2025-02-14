@@ -41,6 +41,7 @@ fn App() -> Element {
                     is_interactive: is_interactive.read().to_owned(),
                     color: color.read().to_owned(),
                     pieces_set: pieces_set.read().to_owned(),
+                    position: _promotion,
                     action: action.read().to_owned(),
                     uci_tx,
                 }
