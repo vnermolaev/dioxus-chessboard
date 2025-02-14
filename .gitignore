@@ -5,3 +5,4 @@ Cargo.lock
 /public/tailwind.css
 /node_modules
 package-lock.json
+*.bak
