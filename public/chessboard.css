@@ -1,27 +1,65 @@
 :root {
-    --color-light: #f0d9b5;
-    --color-dark: #b58863;
+    --color-light: rgb(255 247 236);
+    --color-dark: rgb(198 198 198);
+    --color-move-source: rgba(255, 217, 217, 1);
+    --piece-scale: .8;
 }
 
 .chessboard {
-    width: 100%;
-    aspect-ratio: 1;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+.chessboard > * {
     display: grid;
-    grid-template-rows: repeat(8, 12.5%);
-    grid-template-columns: repeat(8, 12.5%);
+    grid-template-columns: repeat(8, 1fr);
+    height: calc(100% / 8);
+    max-height: calc(100% / 8);
+}
+
+.chessboard > * > * {
+    content: '';
+    display: block;
+    color: transparent;
+}
+
+.chessboard > :nth-child(even) > :nth-child(odd),
+.chessboard > :nth-child(odd) > :nth-child(even) {
+    background-color: var(--color-dark);
+}
+
+.chessboard > :nth-child(even) > :nth-child(even),
+.chessboard > :nth-child(odd) > :nth-child(odd) {
     background-color: var(--color-light);
 }
 
-.chessboard div:nth-child(16n+16),
-.chessboard div:nth-child(16n+14),
-.chessboard div:nth-child(16n+12),
-.chessboard div:nth-child(16n+10),
-.chessboard div:nth-child(16n+7),
-.chessboard div:nth-child(16n+5),
-.chessboard div:nth-child(16n+3),
-.chessboard div:nth-child(16n+1) {
-    background-color: var(--color-dark);
+.chessboard > * > * {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    max-height: -moz-fit-content;
+    max-height: fit-content;
+    min-height: 100%;
+    aspect-ratio: 1/1;
 }
+
+.scaled {
+    transform: scale(var(--piece-scale));
+    position: relative;
+}
+
+.move-source {
+    background-color: var(--color-move-source) !important;
+}
+
+.chessboard > * > * {
+    position: relative;
+}
+
+/* Extra sizes */
 
 .w-1\/8 {
     width: 12.5%;

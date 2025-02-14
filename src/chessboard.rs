@@ -1,9 +1,9 @@
 use crate::files::Files;
 use crate::historical_board::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
-use crate::piece::Piece;
 use crate::promotion::Promotion;
 use crate::ranks::Ranks;
+use crate::square::Square;
 use crate::PieceSet;
 use dioxus::prelude::*;
 use owlchess::board::PrettyStyle;
@@ -33,12 +33,17 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
 
     use_context_provider(|| Signal::new(MoveBuilder::new(props.uci_tx)));
 
-    if let Some(action) = props.action {
-        maybe_update_board(action, props.is_interactive);
-    }
-
-    let board = use_context::<Signal<HistoricalBoard>>();
+    let historical_board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
+
+    if let Some(action) = props.action {
+        maybe_update_board(
+            action,
+            props.is_interactive,
+            &historical_board,
+            &mut move_builder,
+        );
+    }
 
     let (files, ranks) = match props.color {
         PlayerColor::White => (
@@ -51,41 +56,34 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
         ),
     };
 
-    let is_promotion_required = move_builder.read().check_promotion().is_some();
-    let class = if is_promotion_required {
-        "opacity-25"
-    } else {
-        ""
-    };
+    let mut chessboard_classes = vec!["chessboard"];
+
+    if move_builder.read().check_promotion().is_some() {
+        // Promotion is required.
+        chessboard_classes.push("opacity-25");
+    }
 
     rsx! {
         document::Link { rel: "stylesheet", href: CHESSBOARD_CLASSES }
         document::Link { rel: "stylesheet", href: TAILWIND_CLASSES }
 
         div { class: "relative",
-            div { id: "chessboard", class,
-                div { class: "chessboard",
-                    for r in ranks.iter().cloned() {
+            div { class: chessboard_classes.join(" "),
+                for r in ranks.iter().cloned() {
+                    div { class: "row",
                         for f in files.iter().cloned() {
-                            div {
-                                id: format!("{f}{r}"),
-                                onclick: move |_ev| {
-                                    // if props.is_interactive {
-                                        move_builder.write().put_square(f, r, &board.read());
-                                    // }
-                                },
-                                Piece {
-                                    coord: Coord::from_parts(f, r),
-                                    color: props.color,
-                                    pieces_set: props.pieces_set,
-                                }
+                            Square {
+                                is_interactive: props.is_interactive,
+                                coord: Coord::from_parts(f, r),
+                                color: props.color,
+                                pieces_set: props.pieces_set,
                             }
                         }
                     }
                 }
-                Ranks { color: props.color }
-                Files { color: props.color }
             }
+            Ranks { color: props.color }
+            Files { color: props.color }
             Promotion { color: props.color, pieces_set: props.pieces_set }
         }
     }
@@ -94,7 +92,12 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
 /// Examine [Action] and apply respective changes if the action has not yet been processed.
 /// If the action was processed, does nothing.
 /// If the board is not interactive, mark the action as processed.
-fn maybe_update_board(action: Action, is_interactive: bool) {
+fn maybe_update_board(
+    action: Action,
+    is_interactive: bool,
+    historical_board: &Signal<HistoricalBoard>,
+    move_builder: &mut Signal<MoveBuilder>,
+) {
     let processed_action = PROCESSED_ACTION.load(Relaxed);
     if processed_action == action.discriminator {
         return;
@@ -102,18 +105,16 @@ fn maybe_update_board(action: Action, is_interactive: bool) {
     PROCESSED_ACTION.store(action.discriminator, Relaxed);
 
     if !is_interactive {
+        debug!("Chessboard is not interactive. Ignoring the request...");
         return;
     }
 
-    debug!("Chessboard must act: {action:?}");
+    debug!("Applying action: {action:?}");
 
-    let board = use_context::<Signal<HistoricalBoard>>();
-    let mut move_builder = use_context::<Signal<MoveBuilder>>();
+    let board = historical_board.read();
 
     match action.action {
         ActionInner::MakeUciMove(uci) => {
-            let board = board.read();
-
             if move_builder.write().apply_uci_move(&uci, &board).is_ok() {
                 info!("Injected move: {uci}");
             } else {
@@ -124,7 +125,7 @@ fn maybe_update_board(action: Action, is_interactive: bool) {
             }
         }
         ActionInner::RevertMove => {
-            if let Some(m) = board.read().last_move() {
+            if let Some(m) = board.last_move() {
                 move_builder.write().revert_move(m);
             }
         }

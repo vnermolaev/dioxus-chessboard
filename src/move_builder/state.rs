@@ -3,7 +3,7 @@ use crate::move_builder::promotion::Promotion;
 use crate::move_builder::MoveAction;
 use owlchess::board::PrettyStyle;
 use owlchess::moves::{uci, PromotePiece};
-use owlchess::{Board, Color, Coord, File, Move, Piece, Rank};
+use owlchess::{Board, Color, Coord, Move, Piece, Rank};
 use tracing::{debug, warn};
 
 /// Builder for [Move] structured as a [State] machine:
@@ -84,9 +84,7 @@ impl State {
     }
 
     /// Puts a square into [State].
-    pub(crate) fn put_square(&mut self, file: File, rank: Rank, board: &Board) {
-        let coord = Coord::from_parts(file, rank);
-
+    pub(crate) fn put_square_coord(&mut self, coord: Coord, board: &Board) {
         *self = match self {
             // Start building a move by selecting a piece.
             Self::None

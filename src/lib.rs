@@ -7,8 +7,9 @@ pub(crate) mod ranks;
 
 mod chessboard;
 pub use chessboard::{Action, Chessboard, ChessboardProps, PlayerColor};
-
 mod pieces;
+mod square;
+
 pub use pieces::PieceSet;
 
 use crate::historical_board::HistoricalBoard;

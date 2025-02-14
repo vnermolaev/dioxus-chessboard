@@ -22,16 +22,16 @@ pub(crate) fn Ranks(props: RanksProps) -> Element {
                         match props.color {
                             PlayerColor::White => {
                                 if rank.index() % 2 == 0 {
-                                    "var(--color-dark)"
-                                } else {
                                     "var(--color-light)"
+                                } else {
+                                    "var(--color-dark)"
                                 }
                             }
                             PlayerColor::Black => {
                                 if rank.index() % 2 == 0 {
-                                    "var(--color-light)"
-                                } else {
                                     "var(--color-dark)"
+                                } else {
+                                    "var(--color-light)"
                                 }
                             }
                         },
