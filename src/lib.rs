@@ -32,10 +32,10 @@ fn finalize(move_builder: &mut Signal<MoveBuilder>, board: &mut Signal<Historica
             debug!("New board\n{}", board.read().pretty(PrettyStyle::Utf8));
         }
         MoveAction::Revert => {
-            debug!("Reverting the last move");
+            debug!("Reverting the last move ");
             let m = board.write().revert_last_move();
             debug!(
-                "Move {m:?} has been reverted\nNew board{}\n",
+                "Move {m:?} has been reverted \nNew board\n{}\n",
                 board.read().pretty(PrettyStyle::Utf8)
             );
         }
