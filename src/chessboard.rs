@@ -8,7 +8,7 @@ use crate::PieceSet;
 use dioxus::prelude::*;
 use owlchess::board::PrettyStyle;
 use owlchess::{Coord, File, Rank};
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display};
 use std::sync::atomic::AtomicU32;
 use std::sync::atomic::Ordering::Relaxed;
 use tracing::{debug, info, warn};
@@ -200,7 +200,7 @@ struct CompleteChessboardProps {
 }
 
 impl Debug for CompleteChessboardProps {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("CompleteChessboardProps")
             .field("is_interactive", &self.is_interactive)
             .field("color", &self.color)
@@ -241,6 +241,15 @@ impl PlayerColor {
         match self {
             Self::White => *self = Self::Black,
             Self::Black => *self = Self::White,
+        }
+    }
+}
+
+impl Display for PlayerColor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::White => write!(f, "White"),
+            Self::Black => write!(f, "Black"),
         }
     }
 }
