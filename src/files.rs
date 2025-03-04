@@ -13,10 +13,10 @@ pub(crate) fn Files(props: FilesProps) -> Element {
     rsx! {
         div {
             id: "files",
-            class: "absolute w-full bottom-0 text-xs flex flex-row font-semibold",
+            class: "files",
             for file in files {
                 div {
-                    class: "pointer-events-none pl-1 w-1/8",
+                    class: "file w-1/8",
                     style: format!(
                         "color: {}",
                         match props.color {

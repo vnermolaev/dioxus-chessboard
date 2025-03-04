@@ -13,8 +13,7 @@ use std::sync::atomic::AtomicU32;
 use std::sync::atomic::Ordering::Relaxed;
 use tracing::{debug, info, warn};
 
-/// Classes to render the chessboard.
-const STYLE_CSS: Asset = asset!("public/css/dist.css");
+const CHESSBOARD_STYLES: Asset = asset!("/public/css/chessboard.css");
 
 /// Component rendering [Chessboard].
 #[component]
@@ -62,9 +61,9 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
     }
 
     rsx! {
-        document::Link { rel: "stylesheet", href: STYLE_CSS }
+        document::Link { rel: "stylesheet", href: CHESSBOARD_STYLES }
 
-        div { class: "relative",
+        div { position: "relative",
             div { class: chessboard_classes.join(" "),
                 for r in ranks.iter().cloned() {
                     div { class: "row",

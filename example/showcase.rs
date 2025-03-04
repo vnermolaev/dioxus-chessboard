@@ -7,6 +7,9 @@ use tracing::{debug, Level};
 #[cfg(feature = "showcase")]
 use futures_util::StreamExt;
 
+/// Classes to render the chessboard.
+const STYLE_CSS: Asset = asset!("/example/dist.css");
+
 fn main() {
     dioxus_logger::init(Level::DEBUG).expect("failed to init logger");
     launch(App);
@@ -32,6 +35,8 @@ fn App() -> Element {
     });
 
     rsx! {
+        document::Link { rel: "stylesheet", href: STYLE_CSS }
+
         div { class: "flex w-full space-x-4 min-h-screen",
 
             // Chessboard.

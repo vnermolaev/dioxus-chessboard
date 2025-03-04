@@ -46,7 +46,7 @@ pub(crate) fn Promotion(props: PromotionProperties) -> Element {
     };
 
     let promotion_container_classes = {
-        let mut classes = vec!["absolute", "w-1/8", "h-1/2"];
+        let mut classes = vec!["promotion-position", "w-1/8", "h-1/2"];
 
         let shift = match props.color {
             PlayerColor::White => File::iter().position(|f| f == dst.file()).unwrap(),
@@ -58,10 +58,10 @@ pub(crate) fn Promotion(props: PromotionProperties) -> Element {
         let alignment = match (props.color, dst.rank()) {
             // Player plays for White and White is promoting or
             // player plays for Black and Black is promoting
-            (PlayerColor::White, Rank::R8) | (PlayerColor::Black, Rank::R1) => "top-0",
+            (PlayerColor::White, Rank::R8) | (PlayerColor::Black, Rank::R1) => "promotion-top",
             // Player plays for White and Black is promoting or
             // player plays for Black and White is promoting and
-            (PlayerColor::White, Rank::R1) | (PlayerColor::Black, Rank::R8) => "bottom-0",
+            (PlayerColor::White, Rank::R1) | (PlayerColor::Black, Rank::R8) => "promotion-bottom",
             _ => unreachable!("Promotion happens only if destination square has Rank 1 or 8"),
         };
         classes.push(alignment);
@@ -95,9 +95,6 @@ fn PromotePiece(props: PromotePieceProps) -> Element {
     let src = compute_piece_img_src(props.pieces_set, cell)
         .unwrap_or_else(|| panic!("Cell {cell} must be occupied"));
 
-    let piece_container_classes = "flex h-1/4 rounded-full bg-gray-400 justify-center items-center hover:bg-orange-300 transition duration-150 ease-in-out";
-    let piece_classes = "h-4/6 hover:scale-125 transition duration-150 ease-in-out";
-
     let onclick = move |_ev| {
         {
             let board = board.read();
@@ -107,8 +104,8 @@ fn PromotePiece(props: PromotePieceProps) -> Element {
     };
 
     rsx! {
-        div { class: piece_container_classes,
-            img { class: piece_classes, src, onclick }
+        div { class: "promotion-piece-container",
+            img { class: "promotion-piece", src, onclick }
         }
     }
 }

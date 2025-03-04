@@ -13,10 +13,10 @@ pub(crate) fn Ranks(props: RanksProps) -> Element {
     rsx! {
         div {
             id: "ranks",
-            class: "absolute h-full top-0 right-0 text-xs font-semibold",
+            class: "ranks",
             for rank in ranks {
                 div {
-                    class: "pointer-events-none pr-1 h-1/8",
+                    class: "rank h-1/8",
                     style: format!(
                         "color: {}",
                         match props.color {

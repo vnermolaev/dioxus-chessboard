@@ -15,17 +15,21 @@ that can be integrated into any web application built with Dioxus.
   ```bash
   cargo install --git https://github.com/DioxusLabs/dioxus dioxus-cli
   ```
+- Clone this repository
+  ```bash
+  git clone git@github.com:vnermolaev/dioxus-chessboard.git
+  ```   
+
+- Change to the example directory and execute all the commands from there
+  ```bash
+  cd ./example
+  ```
 
 - Install the dependencies to compile Tailwind CSS.
 
   ``` bash
   npm i
   ```
-
-- Clone this repository
-  ```bash
-  git clone git@github.com:vnermolaev/dioxus-chessboard.git
-  ```   
 
 - Compile the styles
   ``` bash

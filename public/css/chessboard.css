@@ -1,3 +1,4 @@
+/* Chessboard classes */
 :root {
     --color-light: rgb(255 247 236);
     --color-dark: rgb(198 198 198);
@@ -58,6 +59,85 @@
 .chessboard > * > * {
     position: relative;
 }
+
+/* Ranks */
+.ranks {
+    position: absolute; /* absolute */
+    height: 100%; /* h-full */
+    top: 0; /* top-0 */
+    right: 0; /* right-0 */
+    font-size: 0.75rem; /* text-xs (12px by default) */
+    line-height: 1rem; /* text-xs line-height */
+    font-weight: 600; /* font-semibold */
+}
+
+.rank {
+    pointer-events: none; /* pointer-events-none */
+    padding-right: 0.25rem; /* pr-1 */
+}
+
+/* Files */
+.files {
+    position: absolute; /* absolute */
+    width: 100%; /* w-full */
+    bottom: 0; /* bottom-0 */
+    font-size: 0.75rem; /* text-xs (corresponds to 12px default) */
+    line-height: 1rem; /* text-xs line height */
+    display: flex; /* flex */
+    flex-direction: row; /* flex-row */
+    font-weight: 600; /* font-semibold */
+}
+
+.file {
+    pointer-events: none; /* pointer-events-none */
+    padding-left: 0.25rem; /* pl-1 */
+}
+
+/* Promotion */
+.promotion-position {
+    position: absolute;
+}
+
+.promotion-top {
+    top: 0;
+}
+
+.promotion-bottom {
+    bottom: 0;
+}
+
+.promotion-piece-container {
+    display: flex; /* flex */
+    height: 25%; /* h-1/4 */
+    border-radius: 9999px; /* rounded-full */
+    background-color: #cbd5e0; /* bg-gray-400 (typical Tailwind gray-400) */
+    justify-content: center; /* justify-center */
+    align-items: center; /* items-center */
+    /* transition */
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+    transition-duration: 150ms; /* duration-150 */
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); /* ease-in-out */
+}
+
+.promotion-piece-container:hover {
+    background-color: rgb(253 186 116); /* hover:bg-orange-300 (typical Tailwind orange-300) */
+}
+
+.promotion-piece {
+    /* h-4/6 */
+    height: 66.666667%;
+
+    /* transition + duration-150 + ease-in-out */
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.promotion-piece:hover {
+    /* hover:scale-125 */
+    transform: scale(1.25);
+}
+
 
 /* Extra sizes */
 
