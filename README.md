@@ -16,10 +16,10 @@ that can be integrated into any web application built with Dioxus.
   cargo install --git https://github.com/DioxusLabs/dioxus dioxus-cli
   ```
 
-- Install the latest Tailwind CLI
+- Install the dependencies to compile Tailwind CSS.
 
   ``` bash
-  npm install -g tailwindcss @tailwindcss/cli 
+  npm i
   ```
 
 - Clone this repository
@@ -29,7 +29,7 @@ that can be integrated into any web application built with Dioxus.
 
 - Compile the styles
   ``` bash
-  npx tailwindcss -i ./input.css -o ./public/tailwind.css --watch
+  npm run buildcss
   ```
 
 - Compile the showcase example

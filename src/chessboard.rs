@@ -14,9 +14,7 @@ use std::sync::atomic::Ordering::Relaxed;
 use tracing::{debug, info, warn};
 
 /// Classes to render the chessboard.
-const CHESSBOARD_CLASSES: Asset = asset!("public/chessboard.css");
-// Tailwind classes.
-const TAILWIND_CLASSES: Asset = asset!("public/tailwind.css");
+const STYLE_CSS: Asset = asset!("public/css/dist.css");
 
 /// Component rendering [Chessboard].
 #[component]
@@ -64,8 +62,7 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
     }
 
     rsx! {
-        document::Link { rel: "stylesheet", href: CHESSBOARD_CLASSES }
-        document::Link { rel: "stylesheet", href: TAILWIND_CLASSES }
+        document::Link { rel: "stylesheet", href: STYLE_CSS }
 
         div { class: "relative",
             div { class: chessboard_classes.join(" "),
