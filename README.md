@@ -13,7 +13,7 @@ that can be integrated into any web application built with Dioxus.
 - Install the latest Dioxus CLI
 
   ```bash
-  cargo install --git https://github.com/DioxusLabs/dioxus dioxus-cli
+  cargo install dioxus-cli
   ```
 - Clone this repository
   ```bash
