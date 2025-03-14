@@ -28,7 +28,7 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
         )
     });
 
-    use_context_provider(|| Signal::new(MoveBuilder::new(props.uci_tx)));
+    use_context_provider(|| Signal::new(MoveBuilder::new(props.san_tx)));
 
     let historical_board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
@@ -110,12 +110,12 @@ fn maybe_update_board(
     let board = historical_board.read();
 
     match action.action {
-        ActionInner::MakeUciMove(uci) => {
-            if move_builder.write().apply_uci_move(&uci, &board).is_ok() {
-                info!("Injected move: {uci}");
+        ActionInner::MakeSanMove(san) => {
+            if move_builder.write().apply_san_move(&san, &board).is_ok() {
+                info!("Injected move: {san}");
             } else {
                 warn!(
-                    "Injected move {uci} is not legal in the current position\n{}",
+                    "Injected move {san} is not legal in the current position\n{}",
                     board.pretty(PrettyStyle::Utf8)
                 );
             }
@@ -144,7 +144,7 @@ pub struct ChessboardProps {
     /// Injected action.
     action: Option<Action>,
     /// Transmitter channel of moves made on the board.
-    uci_tx: Option<Coroutine<String>>,
+    san_tx: Option<Coroutine<String>>,
 }
 
 /// Action counter to make every [ActionInner] unique, i.e., [UniqueAction].
@@ -162,10 +162,11 @@ pub struct Action {
 }
 
 impl Action {
+    /// Make a SAN-encoded move.
     pub fn make_move(m: &str) -> Self {
         Self {
             discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
-            action: ActionInner::MakeUciMove(m.to_string()),
+            action: ActionInner::MakeSanMove(m.to_string()),
         }
     }
 
@@ -180,7 +181,7 @@ impl Action {
 #[derive(Debug, Clone, PartialEq)]
 /// List of action [Chessboard] can receive via its client.
 pub(crate) enum ActionInner {
-    MakeUciMove(String),
+    MakeSanMove(String),
     RevertMove,
 }
 
@@ -192,7 +193,7 @@ struct CompleteChessboardProps {
     position: String,
     pieces_set: PieceSet,
     action: Option<Action>,
-    uci_tx: Option<Coroutine<String>>,
+    san_tx: Option<Coroutine<String>>,
 }
 
 impl Debug for CompleteChessboardProps {
@@ -217,7 +218,7 @@ impl ChessboardProps {
                 .unwrap_or_else(|| Self::default_position().to_string()),
             pieces_set: self.pieces_set.unwrap_or(PieceSet::Standard),
             action: self.action,
-            uci_tx: self.uci_tx,
+            san_tx: self.san_tx,
         }
     }
     fn default_position() -> &'static str {

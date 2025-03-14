@@ -2,7 +2,7 @@ use crate::move_builder::applicable_move::ApplicableMove;
 use crate::move_builder::promotion::Promotion;
 use crate::move_builder::MoveAction;
 use owlchess::board::PrettyStyle;
-use owlchess::moves::{uci, PromotePiece};
+use owlchess::moves::{san, PromotePiece};
 use owlchess::{Board, Color, Coord, Move, Piece, Rank};
 use tracing::{debug, warn};
 
@@ -112,7 +112,7 @@ impl State {
                     // if the promotion information is required.
                     let hypothetical_promotion_piece = if is_promo_required { "q" } else { "" };
 
-                    // Converting the move a UCI string is a shortcut
+                    // Converting the move to a UCI string is a shortcut
                     // enabling me to avoid dealing with move kind and
                     // let the engine figure it out by itself.
                     let uci = format!("{src}{dst}{hypothetical_promotion_piece}");
@@ -141,12 +141,12 @@ impl State {
         }
     }
 
-    pub(crate) fn apply_uci_move(
+    pub(crate) fn apply_san_move(
         &mut self,
-        uci: &str,
+        san: &str,
         board: &Board,
-    ) -> Result<(), uci::ParseError> {
-        *self = Self::ApplicableMove(ApplicableMove::Automatic(Move::from_uci_legal(uci, board)?));
+    ) -> Result<(), san::ParseError> {
+        *self = Self::ApplicableMove(ApplicableMove::Automatic(Move::from_san(san, board)?));
 
         Ok(())
     }
@@ -168,7 +168,7 @@ impl State {
     pub(crate) fn promote(&mut self, piece: PromotePiece, board: &Board) {
         *self = match self {
             Self::Promotion(Promotion::Promotion { src, dst }) => {
-                // Converting the move a UCI string is a shortcut
+                // Converting the move to a UCI string is a shortcut
                 // enabling me to avoid dealing with move kind and
                 // let the engine figure it out by itself.
                 let promotion_piece = match piece {

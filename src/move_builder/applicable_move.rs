@@ -6,7 +6,7 @@ use tracing::debug;
 pub enum ApplicableMove {
     /// [Move] built through a stp-by-step process of selecting source/destination/promotion.
     Manual(Move),
-    /// [Move] injected immediately by uci.
+    /// [Move] injected immediately by SAN.
     Automatic(Move),
     /// Fictional [Move] to manage step-backs.
     /// It shall never be applied to a [Board].

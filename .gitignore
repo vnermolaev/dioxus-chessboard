@@ -7,3 +7,4 @@ Cargo.lock
 package-lock.json
 *.bak
 dist.css
+.DS_Store

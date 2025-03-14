@@ -21,14 +21,14 @@ fn App() -> Element {
     let mut pieces_set = use_signal(|| PieceSet::Standard);
     let mut is_interactive = use_signal(|| true);
     let mut action = use_signal(|| None);
-    let mut uci_content = use_signal(|| "".to_string());
+    let mut san_content = use_signal(|| "".to_string());
 
     let _castling =
         "r3kbnr/ppp1qppp/2np4/4p3/2B1P1b1/P1N2N2/1PPP1PPP/R1BQK2R w KQkq - 1 6".to_string();
 
     let _promotion = "rnbqkb1r/ppppn1P1/7p/8/8/4BN2/PPp1BPPP/RN1QK2R w KQkq - 2 9".to_string();
 
-    let uci_tx = use_coroutine(|mut rx: UnboundedReceiver<String>| async move {
+    let san_tx = use_coroutine(|mut rx: UnboundedReceiver<String>| async move {
         while let Some(msg) = rx.next().await {
             debug!("Chessboard reports: {msg}");
         }
@@ -47,7 +47,7 @@ fn App() -> Element {
                     pieces_set: pieces_set.read().to_owned(),
                     position: _promotion,
                     action: action.read().to_owned(),
-                    uci_tx,
+                    san_tx,
                 }
             }
 
@@ -112,31 +112,31 @@ fn App() -> Element {
                     }
                 }
 
-                // Inject UCI Move Text Input
+                // Inject SAN Move Text Input
                 div { class: "space-y-2 border border-gray-300 rounded-lg p-2",
                     label {
                         class: "block text-gray-700 font-semibold",
-                        r#for: "uci-move",
-                        "Inject UCI move"
+                        r#for: "san-move",
+                        "Inject SAN-encoded move"
                     }
                     input {
                         r#type: "text",
-                        id: "uci-move",
+                        id: "san-move",
                         class: "form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50",
                         placeholder: "Press Enter to send the move to Chessboard",
                         oninput: move |ev| {
-                            *uci_content.write() = ev.value();
+                            *san_content.write() = ev.value();
                         },
                         onkeypress: move |ev| {
                             if ev.key() == Key::Enter {
-                                let value = uci_content.read().to_owned();
+                                let value = san_content.read().to_owned();
                                 debug!("{value}");
                                 *action.write() = Some(Action::make_move(&value));
                             }
                         },
                     }
                     // Hint Text
-                    p { class: "text-gray-500 text-sm", "Try a popular first move \"e2e4\"" }
+                    p { class: "text-gray-500 text-sm", "Try a popular first move for white \"e4\"" }
                 }
 
                 // Flip the Board Button

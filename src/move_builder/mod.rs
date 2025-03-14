@@ -1,7 +1,7 @@
 use crate::move_builder::state::State;
 use crate::PlayerColor;
 use dioxus::prelude::Coroutine;
-use owlchess::moves::{uci, PromotePiece, Style};
+use owlchess::moves::{san, PromotePiece, Style};
 use owlchess::{Board, Coord, Move};
 use std::ops::{Deref, DerefMut};
 
@@ -11,8 +11,8 @@ mod state;
 
 pub struct MoveBuilder {
     /// When the move reaches [State::ApplicableMove],
-    /// the corresponding uci will be sent out.
-    uci_move_tx: Option<Coroutine<String>>,
+    /// the corresponding SAN will be sent out.
+    san_move_tx: Option<Coroutine<String>>,
     /// [State] of the builder.
     state: State,
 }
@@ -31,9 +31,9 @@ impl DerefMut for MoveBuilder {
 }
 
 impl MoveBuilder {
-    pub fn new(uci_move_tx: Option<Coroutine<String>>) -> Self {
+    pub fn new(san_move_tx: Option<Coroutine<String>>) -> Self {
         Self {
-            uci_move_tx,
+            san_move_tx,
             state: State::new(),
         }
     }
@@ -52,9 +52,9 @@ impl MoveBuilder {
         self.deref_mut().put_square_coord(coord, board)
     }
 
-    /// Tries to apply a UCI move, if illegal it will error.
-    pub fn apply_uci_move(&mut self, uci: &str, board: &Board) -> Result<(), uci::ParseError> {
-        self.deref_mut().apply_uci_move(uci, board)
+    /// Tries to apply a SAN move, if illegal it will error.
+    pub fn apply_san_move(&mut self, san: &str, board: &Board) -> Result<(), san::ParseError> {
+        self.deref_mut().apply_san_move(san, board)
     }
 
     /// Reverts the [Move] m.
@@ -105,13 +105,13 @@ impl MoveBuilder {
     pub fn finalize(&mut self, board: &Board) -> MoveAction {
         let m = self.deref_mut().finalize();
 
-        if let (MoveAction::Apply(ref m), Some(ref uci_move_tx)) = (m, self.uci_move_tx) {
+        if let (MoveAction::Apply(ref m), Some(ref san_move_tx)) = (m, self.san_move_tx) {
             // There is a valid move and a coroutine to report it.
-            let uci = m
-                .styled(board, Style::Uci)
+            let san = m
+                .styled(board, Style::San)
                 .expect("Move must be correctly finalized")
                 .to_string();
-            uci_move_tx.send(uci);
+            san_move_tx.send(san);
         }
 
         m
