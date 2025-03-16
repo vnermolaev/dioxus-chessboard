@@ -9,6 +9,7 @@ use dioxus::prelude::*;
 use owlchess::board::PrettyStyle;
 use owlchess::{Coord, File, Rank};
 use std::fmt::{Debug, Display};
+use std::ops::Deref;
 use std::sync::atomic::AtomicU32;
 use std::sync::atomic::Ordering::Relaxed;
 use tracing::{debug, info, warn};
@@ -144,7 +145,25 @@ pub struct ChessboardProps {
     /// Injected action.
     action: Option<Action>,
     /// Transmitter channel of moves made on the board.
-    san_tx: Option<Coroutine<String>>,
+    san_tx: Option<Coroutine<SanMove>>,
+}
+
+/// SAN-encoded chess move.
+#[derive(Debug)]
+pub struct SanMove(pub(crate) String);
+
+impl Deref for SanMove {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Display for SanMove {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 /// Action counter to make every [ActionInner] unique, i.e., [UniqueAction].
@@ -193,7 +212,7 @@ struct CompleteChessboardProps {
     position: String,
     pieces_set: PieceSet,
     action: Option<Action>,
-    san_tx: Option<Coroutine<String>>,
+    san_tx: Option<Coroutine<SanMove>>,
 }
 
 impl Debug for CompleteChessboardProps {

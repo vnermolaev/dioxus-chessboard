@@ -6,7 +6,7 @@ pub(crate) mod promotion;
 pub(crate) mod ranks;
 
 mod chessboard;
-pub use chessboard::{Action, Chessboard, ChessboardProps, PlayerColor};
+pub use chessboard::{Action, Chessboard, ChessboardProps, PlayerColor, SanMove};
 mod pieces;
 mod square;
 

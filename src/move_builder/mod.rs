@@ -1,3 +1,4 @@
+use crate::chessboard::SanMove;
 use crate::move_builder::state::State;
 use crate::PlayerColor;
 use dioxus::prelude::Coroutine;
@@ -12,7 +13,7 @@ mod state;
 pub struct MoveBuilder {
     /// When the move reaches [State::ApplicableMove],
     /// the corresponding SAN will be sent out.
-    san_move_tx: Option<Coroutine<String>>,
+    san_move_tx: Option<Coroutine<SanMove>>,
     /// [State] of the builder.
     state: State,
 }
@@ -31,7 +32,7 @@ impl DerefMut for MoveBuilder {
 }
 
 impl MoveBuilder {
-    pub fn new(san_move_tx: Option<Coroutine<String>>) -> Self {
+    pub fn new(san_move_tx: Option<Coroutine<SanMove>>) -> Self {
         Self {
             san_move_tx,
             state: State::new(),
@@ -111,7 +112,8 @@ impl MoveBuilder {
                 .styled(board, Style::San)
                 .expect("Move must be correctly finalized")
                 .to_string();
-            san_move_tx.send(san);
+
+            san_move_tx.send(SanMove(san));
         }
 
         m
