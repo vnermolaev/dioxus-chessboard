@@ -149,20 +149,36 @@ pub struct ChessboardProps {
 }
 
 /// SAN-encoded chess move.
-#[derive(Debug)]
-pub struct SanMove(pub(crate) String);
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SanMove {
+    san_repr: String,
+    piece: owlchess::Piece,
+}
+
+impl SanMove {
+    pub fn new(san_repr: &str, piece: owlchess::Piece) -> Self {
+        Self {
+            san_repr: san_repr.to_string(),
+            piece,
+        }
+    }
+
+    pub fn piece(&self) -> owlchess::Piece {
+        self.piece
+    }
+}
 
 impl Deref for SanMove {
     type Target = String;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.san_repr
     }
 }
 
 impl Display for SanMove {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{self:?}")
     }
 }
 

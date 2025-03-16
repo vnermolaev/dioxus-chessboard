@@ -108,12 +108,17 @@ impl MoveBuilder {
 
         if let (MoveAction::Apply(ref m), Some(ref san_move_tx)) = (m, self.san_move_tx) {
             // There is a valid move and a coroutine to report it.
-            let san = m
+            let san_repr = m
                 .styled(board, Style::San)
                 .expect("Move must be correctly finalized")
                 .to_string();
 
-            san_move_tx.send(SanMove(san));
+            let piece = board
+                .get(m.src())
+                .piece()
+                .expect("Move is valid, thus src must contain a piece");
+
+            san_move_tx.send(SanMove::new(&san_repr, piece));
         }
 
         m
