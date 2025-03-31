@@ -20,7 +20,7 @@ const CHESSBOARD_STYLES: Asset = asset!("/public/css/chessboard.css");
 #[component]
 pub fn Chessboard(props: ChessboardProps) -> Element {
     let props = props.complete();
-    debug!("{props:?}");
+    debug!("Rendering with properties: {props:#?}");
 
     use_context_provider(|| {
         Signal::new(
