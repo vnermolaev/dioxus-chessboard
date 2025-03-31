@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 use dioxus::prelude::*;
-use dioxus_chessboard::{Action, Chessboard, PieceSet, PlayerColor, SanMove};
+use dioxus_chessboard::{Action, Chessboard, ChessboardProps, PieceSet, PlayerColor, SanMove};
 use tracing::{debug, Level};
 
 #[cfg(feature = "showcase")]
@@ -23,10 +23,10 @@ fn App() -> Element {
     let mut action = use_signal(|| None);
     let mut san_content = use_signal(|| "".to_string());
 
-    let _castling =
+    let castling =
         "r3kbnr/ppp1qppp/2np4/4p3/2B1P1b1/P1N2N2/1PPP1PPP/R1BQK2R w KQkq - 1 6".to_string();
 
-    let _promotion = "rnbqkb1r/ppppn1P1/7p/8/8/4BN2/PPp1BPPP/RN1QK2R w KQkq - 2 9".to_string();
+    let promotion = "rnbqkb1r/ppppn1P1/7p/8/8/4BN2/PPp1BPPP/RN1QK2R w KQkq - 2 9".to_string();
 
     let san_tx = use_coroutine(|mut rx: UnboundedReceiver<SanMove>| async move {
         while let Some(msg) = rx.next().await {
@@ -41,14 +41,14 @@ fn App() -> Element {
 
             // Chessboard.
             div { class: "w-1/3 h-1/3 border border-black",
-                Chessboard {
-                    is_interactive: is_interactive.read().to_owned(),
-                    color: color.read().to_owned(),
-                    pieces_set: pieces_set.read().to_owned(),
-                    position: _promotion,
-                    action: action.read().to_owned(),
-                    san_tx,
-                }
+                    Chessboard {
+                        is_interactive: is_interactive.read().to_owned(),
+                        color: color.read().to_owned(),
+                        pieces_set: pieces_set.read().to_owned(),
+                        action: action.read().to_owned(),
+                        san_tx,
+                    }
+
             }
 
             // Controls.
@@ -156,6 +156,52 @@ fn App() -> Element {
                             *action.write() = Some(Action::revert_move());
                         },
                         "Revert last move"
+                    }
+                }
+
+                // Positions Radio Input
+                div { class: "space-y-2 border border-gray-300 rounded-lg p-2",
+                    label { class: "block text-gray-700 font-semibold", "Positions" }
+                    div { class: "flex items-center space-x-4",
+                        label { class: "inline-flex items-center",
+                            input {
+                                r#type: "radio",
+                                class: "form-radio text-blue-500",
+                                name: "position",
+                                value: "default",
+                                checked: true,
+                                oninput: move |_ev| {
+                                    *action.write() = Some(Action::set_position(ChessboardProps::default_position()));
+                                },
+                            }
+                            span { class: "ml-2 text-gray-700", "Starting position" }
+                        }
+
+                        label { class: "inline-flex items-center",
+                            input {
+                                r#type: "radio",
+                                class: "form-radio text-blue-500",
+                                name: "position",
+                                value: "castling",
+                                oninput: move |_ev| {
+                                    *action.write() = Some(Action::set_position(&castling));
+                                },
+                            }
+                            span { class: "ml-2 text-gray-700", "Test Castling" }
+                        }
+
+                        label { class: "inline-flex items-center",
+                            input {
+                                r#type: "radio",
+                                class: "form-radio text-blue-500",
+                                name: "position",
+                                value: "promotion",
+                                oninput: move |_ev| {
+                                    *action.write() = Some(Action::set_position(&promotion));
+                                } ,
+                            }
+                            span { class: "ml-2 text-gray-700", "Test Promotion" }
+                        }
                     }
                 }
             }

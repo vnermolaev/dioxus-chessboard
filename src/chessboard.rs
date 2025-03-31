@@ -24,21 +24,23 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
 
     use_context_provider(|| {
         Signal::new(
-            HistoricalBoard::from_fen(&props.position)
-                .expect("Board must be constructible from a valid position"),
+            HistoricalBoard::from_fen(&props.starting_position)
+                .expect("Valid FEN position description is expected"),
         )
     });
 
+    let board = use_context::<Signal<HistoricalBoard>>();
+
     use_context_provider(|| Signal::new(MoveBuilder::new(props.san_tx)));
 
-    let historical_board = use_context::<Signal<HistoricalBoard>>();
+    let mut historical_board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
 
     if let Some(action) = props.action {
         maybe_update_board(
             action,
             props.is_interactive,
-            &historical_board,
+            &mut historical_board,
             &mut move_builder,
         );
     }
@@ -92,7 +94,7 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
 fn maybe_update_board(
     action: Action,
     is_interactive: bool,
-    historical_board: &Signal<HistoricalBoard>,
+    historical_board: &mut Signal<HistoricalBoard>,
     move_builder: &mut Signal<MoveBuilder>,
 ) {
     let processed_action = PROCESSED_ACTION.load(Relaxed);
@@ -108,10 +110,9 @@ fn maybe_update_board(
 
     debug!("Applying action: {action:?}");
 
-    let board = historical_board.read();
-
     match action.action {
         ActionInner::MakeSanMove(san) => {
+            let board = historical_board.read();
             if move_builder.write().apply_san_move(&san, &board).is_ok() {
                 info!("Injected move: {san}");
             } else {
@@ -122,9 +123,14 @@ fn maybe_update_board(
             }
         }
         ActionInner::RevertMove => {
+            let board = historical_board.read();
             if let Some(m) = board.last_move() {
                 move_builder.write().revert_move(m);
             }
+        }
+        ActionInner::SetPosition(fen) => {
+            *historical_board.write() = HistoricalBoard::from_fen(&fen)
+                .expect("Valid FEN position description is expected");
         }
     }
 }
@@ -138,14 +144,37 @@ pub struct ChessboardProps {
     is_interactive: Option<bool>,
     /// Color the player plays for, i.e., pieces at the bottom.
     color: PlayerColor,
-    /// Starting position in FEN notation.
-    position: Option<String>,
+    /// The starting position in FEN notation.
+    ///
+    /// **IMPORTANT:** This value sets only the initial position.
+    /// The chessboard component will not update if the user changes this starting position,
+    /// because it initializes an internal state that remains immutable with respect to property changes.
+    /// To update the position of an existing component, use [Action::set_position].
+    starting_position: Option<String>,
     /// Pieces set.
     pieces_set: Option<PieceSet>,
     /// Injected action.
     action: Option<Action>,
     /// Transmitter channel of moves made on the board.
     san_tx: Option<Coroutine<SanMove>>,
+}
+
+impl ChessboardProps {
+    fn complete(self) -> CompleteChessboardProps {
+        CompleteChessboardProps {
+            is_interactive: self.is_interactive.unwrap_or(true),
+            color: self.color,
+            starting_position: self
+                .starting_position
+                .unwrap_or_else(|| Self::default_position().to_string()),
+            pieces_set: self.pieces_set.unwrap_or(PieceSet::Standard),
+            action: self.action,
+            san_tx: self.san_tx,
+        }
+    }
+    pub fn default_position() -> &'static str {
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    }
 }
 
 /// SAN-encoded chess move.
@@ -182,10 +211,10 @@ impl Display for SanMove {
     }
 }
 
-/// Action counter to make every [ActionInner] unique, i.e., [UniqueAction].
+/// Action counter to make every [ActionInner] unique, i.e., [Action].
 static NEXT_ACTION: AtomicU32 = AtomicU32::new(0);
 
-/// Keeps track which injected [UniqueAction]'s have been processed.
+/// Keeps track which injected [ActionInner]'s have been processed.
 /// At initialization, this value must be different from the one in [NEXT_ACTION].
 static PROCESSED_ACTION: AtomicU32 = AtomicU32::new(1);
 
@@ -211,6 +240,13 @@ impl Action {
             action: ActionInner::RevertMove,
         }
     }
+
+    pub fn set_position(position: &str) -> Action {
+        Self {
+            discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
+            action: ActionInner::SetPosition(position.to_string()),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -218,6 +254,7 @@ impl Action {
 pub(crate) enum ActionInner {
     MakeSanMove(String),
     RevertMove,
+    SetPosition(String),
 }
 
 /// Complete properties with absent optional values of [ChessboardProps] filled with default values.
@@ -225,7 +262,7 @@ struct CompleteChessboardProps {
     is_interactive: bool,
     color: PlayerColor,
     /// Starting position in FEN notation.
-    position: String,
+    starting_position: String,
     pieces_set: PieceSet,
     action: Option<Action>,
     san_tx: Option<Coroutine<SanMove>>,
@@ -236,28 +273,10 @@ impl Debug for CompleteChessboardProps {
         f.debug_struct("CompleteChessboardProps")
             .field("is_interactive", &self.is_interactive)
             .field("color", &self.color)
-            .field("position", &self.position)
+            .field("starting position", &self.starting_position)
             .field("pieces_set", &self.pieces_set)
             .field("action", &self.action)
             .finish()
-    }
-}
-
-impl ChessboardProps {
-    fn complete(self) -> CompleteChessboardProps {
-        CompleteChessboardProps {
-            is_interactive: self.is_interactive.unwrap_or(true),
-            color: self.color,
-            position: self
-                .position
-                .unwrap_or_else(|| Self::default_position().to_string()),
-            pieces_set: self.pieces_set.unwrap_or(PieceSet::Standard),
-            action: self.action,
-            san_tx: self.san_tx,
-        }
-    }
-    fn default_position() -> &'static str {
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     }
 }
 
