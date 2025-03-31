@@ -103,15 +103,15 @@ fn maybe_update_board(
     }
     PROCESSED_ACTION.store(action.discriminator, Relaxed);
 
-    if !is_interactive {
-        debug!("Chessboard is not interactive. Ignoring the request...");
-        return;
-    }
+    // if !is_interactive {
+    //     debug!("Chessboard is not interactive. Ignoring the request...");
+    //     return;
+    // }
 
-    debug!("Applying action: {action:?}");
+    debug!("Received action: {action:?}");
 
     match action.action {
-        ActionInner::MakeSanMove(san) => {
+        ActionInner::MakeSanMove(san) if is_interactive => {
             let board = historical_board.read();
             if move_builder.write().apply_san_move(&san, &board).is_ok() {
                 info!("Injected move: {san}");
@@ -122,7 +122,7 @@ fn maybe_update_board(
                 );
             }
         }
-        ActionInner::RevertMove => {
+        ActionInner::RevertMove if is_interactive => {
             let board = historical_board.read();
             if let Some(m) = board.last_move() {
                 move_builder.write().revert_move(m);
@@ -131,6 +131,9 @@ fn maybe_update_board(
         ActionInner::SetPosition(fen) => {
             *historical_board.write() = HistoricalBoard::from_fen(&fen)
                 .expect("Valid FEN position description is expected");
+        }
+        _ => {
+            debug!("Chessboard is not interactive. Ignoring the request...");
         }
     }
 }
