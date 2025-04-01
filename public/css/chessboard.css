@@ -82,7 +82,7 @@
 /*!* For larger screens >= 640px *!*/
 @media (min-width: 640px) {
     .ranks {
-        font-size: clamp(0.625rem, 1.5vw, 0.8rem);
+        font-size: clamp(0.6rem, 0.75vw, 0.7rem);
         /* e.g. 12px min, up to 16px max */
     }
 }
@@ -90,15 +90,13 @@
 .rank {
     pointer-events: none; /* pointer-events-none */
     padding-right: 0.075rem; /* pr-1 */
-    padding-top: 0; /* pr-1 */
 
 }
 
 /*!* For larger screens >= 640px *!*/
 @media (min-width: 640px) {
     .rank {
-        padding-right: 0.1rem;
-        padding-top: 0.1rem; /* pr-1 */
+        padding-right: 0.05rem;
     }
 }
 
@@ -107,7 +105,7 @@
     position: absolute; /* absolute */
     width: 100%; /* w-full */
     bottom: 0; /* bottom-0 */
-    font-size: clamp(0.4rem, 0.75vw, 0.625rem);
+    font-size: clamp(0.4rem, 0.75vw, 0.6rem);
     line-height: 1rem; /* text-xs line height */
     display: flex; /* flex */
     flex-direction: row; /* flex-row */
@@ -118,7 +116,7 @@
 /*!* For larger screens >= 640px *!*/
 @media (min-width: 640px) {
     .files {
-        font-size: clamp(0.625rem, 1.5vw, 0.8rem);
+        font-size: clamp(0.6rem, 0.75vw, 0.7rem);
     }
 }
 
@@ -131,8 +129,7 @@
 /*!* For larger screens >= 640px *!*/
 @media (min-width: 640px) {
     .file {
-        padding-right: 0.1rem;
-        padding-top: 0.1rem; /* pr-1 */
+        padding-left: 0.1rem;
     }
 }
 
