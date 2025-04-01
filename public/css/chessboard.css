@@ -62,18 +62,44 @@
 
 /* Ranks */
 .ranks {
-    position: absolute; /* absolute */
-    height: 100%; /* h-full */
-    top: 0; /* top-0 */
-    right: 0; /* right-0 */
-    font-size: 0.75rem; /* text-xs (12px by default) */
-    line-height: 1rem; /* text-xs line-height */
-    font-weight: 600; /* font-semibold */
+    position: absolute;
+    /* Sizing/Position */
+    top: 0;
+    right: 0;
+    left: auto;
+    height: 100%;
+
+    /* Responsive text using clamp:
+       - Minimum size: 10px (0.625rem)
+       - Fluid scaling (vw)
+       - Maximum size: 14px (0.875rem)
+    */
+    font-size: clamp(0.4rem, 0.75vw, 0.625rem);
+    line-height: 1rem; /* matches text-xs line-height from your original */
+    font-weight: 600; /* equivalent to "font-semibold" */
+}
+
+/*!* For larger screens >= 640px *!*/
+@media (min-width: 640px) {
+    .ranks {
+        font-size: clamp(0.625rem, 1.5vw, 0.8rem);
+        /* e.g. 12px min, up to 16px max */
+    }
 }
 
 .rank {
     pointer-events: none; /* pointer-events-none */
-    padding-right: 0.25rem; /* pr-1 */
+    padding-right: 0.075rem; /* pr-1 */
+    padding-top: 0; /* pr-1 */
+
+}
+
+/*!* For larger screens >= 640px *!*/
+@media (min-width: 640px) {
+    .rank {
+        padding-right: 0.1rem;
+        padding-top: 0.1rem; /* pr-1 */
+    }
 }
 
 /* Files */
@@ -81,16 +107,33 @@
     position: absolute; /* absolute */
     width: 100%; /* w-full */
     bottom: 0; /* bottom-0 */
-    font-size: 0.75rem; /* text-xs (corresponds to 12px default) */
+    font-size: clamp(0.4rem, 0.75vw, 0.625rem);
     line-height: 1rem; /* text-xs line height */
     display: flex; /* flex */
     flex-direction: row; /* flex-row */
     font-weight: 600; /* font-semibold */
+    text-align: left;
+}
+
+/*!* For larger screens >= 640px *!*/
+@media (min-width: 640px) {
+    .files {
+        font-size: clamp(0.625rem, 1.5vw, 0.8rem);
+    }
 }
 
 .file {
     pointer-events: none; /* pointer-events-none */
-    padding-left: 0.25rem; /* pl-1 */
+    padding-left: 0.1rem; /* pl-1 */
+
+}
+
+/*!* For larger screens >= 640px *!*/
+@media (min-width: 640px) {
+    .file {
+        padding-right: 0.1rem;
+        padding-top: 0.1rem; /* pr-1 */
+    }
 }
 
 /* Promotion */
