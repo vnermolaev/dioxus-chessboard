@@ -7,38 +7,40 @@ use owlchess::{Board, Color, Coord, Move, Piece, Rank};
 use tracing::{debug, warn};
 
 /// Builder for [Move] structured as a [State] machine:
-///            ┌──────────────┐
-///            │     None     ◄──────────────────────────┐
-///            └───────┬──────┘                          │
-///                    │                                 │
-///                 Source                               │
-///                 square                               │
-///                    │                                 │
-///                    │                                 │
-///            ┌───────▼──────┐             Invalid      │
-///       ┌────┤      Src     ├─────┬───────destination──►
-///       │    └──────────────┘     │       square       │
-///       │                    Valid│square              │
-///       │                    Promotion                 │
-///       │                         │                    │
-///       │                ┌────────▼──────┐             │
-///       │                │  PrePromotion │             │
-///       │                └────────┬──────┘             │
-/// Valid square                    │                    │
-/// No promotion                Animation                │
-///       │                         │                    │
-///       │                         │                    │
-///       │                ┌────────▼──────┐  Invalid    │
-///       │                │    Promotion  ├──promotion ─►
-///       │                └────────┬──────┘             │
-///       │                         │                    │
-///       │                         │                    │
-///       │                         │                    │
-///       │  ┌───────────────────┐  │                    │
-///       └──►   ApplicableMove  ◄──┘                    │
-///          └──────────┬────────┘                       │
-///                     │                                │
-///                     └────────────────────────────────►
+///
+///                ┌──────────────┐
+///                │     None     ◄──────────────────────────┐
+///                └───────┬──────┘                          │
+///                        │                                 │
+///                     Source                               │
+///                     square                               │
+///                        │                                 │
+///                        │                                 │
+///                ┌───────▼──────┐             Invalid      │
+///           ┌────┤      Src     ├─────┬───────destination──►
+///           │    └──────────────┘     │       square       │
+///           │                    Valid│square              │
+///           │                    Promotion                 │
+///           │                         │                    │
+///           │                ┌────────▼──────┐             │
+///           │                │  PrePromotion │             │
+///           │                └────────┬──────┘             │
+///     Valid square                    │                    │
+///     No promotion                Animation                │
+///           │                         │                    │
+///           │                         │                    │
+///           │                ┌────────▼──────┐  Invalid    │
+///           │                │    Promotion  ├──promotion ─►
+///           │                └────────┬──────┘             │
+///           │                         │                    │
+///           │                         │                    │
+///           │                         │                    │
+///           │  ┌───────────────────┐  │                    │
+///           └──►   ApplicableMove  ◄──┘                    │
+///              └──────────┬────────┘                       │
+///                         │                                │
+///                         └────────────────────────────────►
+///
 #[derive(Debug)]
 pub enum State {
     None,
@@ -87,15 +89,19 @@ impl State {
     pub(crate) fn put_square_coord(&mut self, coord: Coord, board: &Board) {
         *self = match self {
             // Start building a move by selecting a piece.
-            Self::None
+            Self::None => {
                 if board
                     .get(coord)
                     .color()
-                    .map(|c| c == board.raw().side)
-                    .unwrap_or_default() =>
-            {
-                // Selecting a piece of the right color to move.
-                Self::Src(coord)
+                    .map(|c| c == board.side())
+                    .unwrap_or_default()
+                {
+                    // Selecting a piece of the right color to move.
+                    Self::Src(coord)
+                } else {
+                    debug!("Ignoring the incorrect color piece");
+                    Self::None
+                }
             }
             // Selecting the original source, cancels the move,
             // selecting a different square, sets the destination square.

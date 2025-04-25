@@ -1,15 +1,13 @@
-use crate::chessboard::PlayerColor;
 use crate::historical_board::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
 use crate::pieces::compute_piece_img_src;
 use crate::{finalize, PieceSet};
 use dioxus::prelude::*;
-use owlchess::Coord;
+use owlchess::{Color, Coord};
 
 /// Component rendering pieces on [owlchess::Board].
 #[component]
 pub(crate) fn Piece(props: PieceProps) -> Element {
-    let mut board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
 
     // If promotion is required,
@@ -21,6 +19,8 @@ pub(crate) fn Piece(props: PieceProps) -> Element {
     {
         return rsx! {};
     }
+
+    let mut board = use_context::<Signal<HistoricalBoard>>();
 
     let Some(img_src) = compute_piece_img_src(props.pieces_set, board.read().get(props.coord))
     else {
@@ -51,6 +51,6 @@ pub(crate) fn Piece(props: PieceProps) -> Element {
 #[derive(Props, Debug, PartialEq, Clone)]
 pub(crate) struct PieceProps {
     coord: Coord,
-    color: PlayerColor,
+    color: Color,
     pieces_set: PieceSet,
 }

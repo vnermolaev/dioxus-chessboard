@@ -23,6 +23,7 @@ dioxus-logger = "0.6.1"
 tracing = "0.1.40"
 owlchess = "0.4.0"
 futures-util = { version = "0.3.30", optional = true }
+thiserror = "2.0.12"
 
 [features]
 showcase = ["futures-util"]

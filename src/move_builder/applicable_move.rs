@@ -1,15 +1,15 @@
 use owlchess::{Coord, File, Move, MoveKind, Rank};
 use tracing::debug;
 
-/// A [Move] can be built step by step or immediately injected.
+/// A [`Move`] can be built step by step or immediately injected.
 #[derive(Debug)]
 pub enum ApplicableMove {
-    /// [Move] built through a stp-by-step process of selecting source/destination/promotion.
+    /// [`Move`] built through a stp-by-step process of selecting source/destination/promotion.
     Manual(Move),
-    /// [Move] injected immediately by SAN.
+    /// [`Move`] injected immediately by SAN.
     Automatic(Move),
-    /// Fictional [Move] to manage step-backs.
-    /// It shall never be applied to a [Board].
+    /// Fictional [`Move`] to manage step-backs.
+    /// It shall never be applied to a [`Board`].
     Revert(Move),
 }
 

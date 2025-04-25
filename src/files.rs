@@ -1,33 +1,30 @@
-use crate::chessboard::PlayerColor;
 use dioxus::prelude::*;
-use owlchess::File;
+use owlchess::{Color, File};
 
 /// Component applying the file notation to [Chessboard].
 #[component]
 pub(crate) fn Files(props: FilesProps) -> Element {
     let files = match props.color {
-        PlayerColor::White => File::iter().collect::<Vec<_>>(),
-        PlayerColor::Black => File::iter().collect::<Vec<_>>().into_iter().rev().collect(),
+        Color::White => File::iter().collect::<Vec<_>>(),
+        Color::Black => File::iter().collect::<Vec<_>>().into_iter().rev().collect(),
     };
 
     rsx! {
-        div {
-            id: "files",
-            class: "files",
+        div { id: "files", class: "files",
             for file in files {
                 div {
                     class: "file w-1/8",
                     style: format!(
                         "color: {}",
                         match props.color {
-                            PlayerColor::White => {
+                            Color::White => {
                                 if file.index() % 2 == 0 {
                                     "var(--color-light)"
                                 } else {
                                     "var(--color-dark)"
                                 }
                             }
-                            PlayerColor::Black => {
+                            Color::Black => {
                                 if file.index() % 2 == 0 {
                                     "var(--color-dark)"
                                 } else {
@@ -45,5 +42,5 @@ pub(crate) fn Files(props: FilesProps) -> Element {
 
 #[derive(Props, Debug, PartialEq, Clone)]
 pub(crate) struct FilesProps {
-    color: PlayerColor,
+    color: Color,
 }

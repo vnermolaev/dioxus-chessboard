@@ -1,11 +1,10 @@
-use crate::chessboard::PlayerColor;
 use crate::historical_board::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
 use crate::pieces::compute_piece_img_src;
 use crate::{finalize, PieceSet};
 use dioxus::prelude::*;
 use owlchess::moves::PromotePiece;
-use owlchess::{Cell, File, Piece, Rank};
+use owlchess::{Cell, Color, File, Piece, Rank};
 
 /// Component rendering a selection of pieces when a pawn gets promoted.
 #[component]
@@ -35,10 +34,10 @@ pub(crate) fn Promotion(props: PromotionProperties) -> Element {
         match (props.color, dst.rank()) {
             // Player plays for White and White is promoting or
             // player plays for Black and Black is promoting
-            (PlayerColor::White, Rank::R8) | (PlayerColor::Black, Rank::R1) => pieces,
+            (Color::White, Rank::R8) | (Color::Black, Rank::R1) => pieces,
             // Player plays for White and Black is promoting or
             // player plays for Black and White is promoting and
-            (PlayerColor::White, Rank::R1) | (PlayerColor::Black, Rank::R8) => {
+            (Color::White, Rank::R1) | (Color::Black, Rank::R8) => {
                 pieces.into_iter().rev().collect()
             }
             _ => unreachable!("Promotion happens only if destination square has Rank 1 or 8"),
@@ -49,8 +48,8 @@ pub(crate) fn Promotion(props: PromotionProperties) -> Element {
         let mut classes = vec!["promotion-position", "w-1/8", "h-1/2"];
 
         let shift = match props.color {
-            PlayerColor::White => File::iter().position(|f| f == dst.file()).unwrap(),
-            PlayerColor::Black => 7 - File::iter().position(|f| f == dst.file()).unwrap(),
+            Color::White => File::iter().position(|f| f == dst.file()).unwrap(),
+            Color::Black => 7 - File::iter().position(|f| f == dst.file()).unwrap(),
         };
         let left = format!("left-{shift}/8");
         classes.push(&left);
@@ -58,10 +57,10 @@ pub(crate) fn Promotion(props: PromotionProperties) -> Element {
         let alignment = match (props.color, dst.rank()) {
             // Player plays for White and White is promoting or
             // player plays for Black and Black is promoting
-            (PlayerColor::White, Rank::R8) | (PlayerColor::Black, Rank::R1) => "promotion-top",
+            (Color::White, Rank::R8) | (Color::Black, Rank::R1) => "promotion-top",
             // Player plays for White and Black is promoting or
             // player plays for Black and White is promoting and
-            (PlayerColor::White, Rank::R1) | (PlayerColor::Black, Rank::R8) => "promotion-bottom",
+            (Color::White, Rank::R1) | (Color::Black, Rank::R8) => "promotion-bottom",
             _ => unreachable!("Promotion happens only if destination square has Rank 1 or 8"),
         };
         classes.push(alignment);
@@ -80,7 +79,7 @@ pub(crate) fn Promotion(props: PromotionProperties) -> Element {
 
 #[derive(Props, Debug, PartialEq, Clone)]
 pub struct PromotionProperties {
-    color: PlayerColor,
+    color: Color,
     pieces_set: PieceSet,
 }
 
@@ -100,6 +99,7 @@ fn PromotePiece(props: PromotePieceProps) -> Element {
             let board = board.read();
             move_builder.write().promote(props.piece, &board);
         }
+
         finalize(&mut move_builder, &mut board);
     };
 

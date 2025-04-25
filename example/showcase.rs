@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 use dioxus::prelude::*;
-use dioxus_chessboard::{Action, Chessboard, ChessboardProps, PieceSet, PlayerColor, SanMove};
+use dioxus_chessboard::{Action, Chessboard, ChessboardProps, Color, PieceSet, SanMove};
 use tracing::{debug, Level};
 
 #[cfg(feature = "showcase")]
@@ -17,7 +17,8 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-    let mut color = use_signal(|| PlayerColor::White);
+    let mut player_color = use_signal(|| Color::White);
+    let mut single_player_mode = use_signal(|| false);
     let mut pieces_set = use_signal(|| PieceSet::Standard);
     let mut is_interactive = use_signal(|| true);
     let mut action = use_signal(|| None);
@@ -41,14 +42,14 @@ fn App() -> Element {
 
             // Chessboard.
             div { class: "w-1/3 h-1/3 border border-black",
-                    Chessboard {
-                        is_interactive: is_interactive.read().to_owned(),
-                        color: color.read().to_owned(),
-                        pieces_set: pieces_set.read().to_owned(),
-                        action: action.read().to_owned(),
-                        san_tx,
-                    }
-
+                Chessboard {
+                    is_interactive: is_interactive.read().to_owned(),
+                    player_color: player_color.read().to_owned(),
+                    single_player_mode: single_player_mode.read().to_owned(),
+                    pieces_set: pieces_set.read().to_owned(),
+                    action: action.read().to_owned(),
+                    san_tx,
+                }
             }
 
             // Controls.
@@ -112,6 +113,36 @@ fn App() -> Element {
                     }
                 }
 
+                // Single player mode Radio Input
+                div { class: "space-y-2 border border-gray-300 rounded-lg p-2",
+                    label { class: "block text-gray-700 font-semibold", "Single player mode" }
+                    span { class: "text-xs text-gray-500", "(Player's pieces are at the bottom)" }
+                    div { class: "flex items-center space-x-4",
+                        label { class: "inline-flex items-center",
+                            input {
+                                r#type: "radio",
+                                class: "form-radio text-blue-500",
+                                name: "single_player_mode",
+                                value: "false",
+                                checked: true,
+                                oninput: move |_ev| { *single_player_mode.write() = false },
+                            }
+                            span { class: "ml-2 text-gray-700", "False" }
+                        }
+
+                        label { class: "inline-flex items-center",
+                            input {
+                                r#type: "radio",
+                                class: "form-radio text-blue-500",
+                                name: "single_player_mode",
+                                value: "true",
+                                oninput: move |_ev| { *single_player_mode.write() = true },
+                            }
+                            span { class: "ml-2 text-gray-700", "True" }
+                        }
+                    }
+                }
+
                 // Inject SAN Move Text Input
                 div { class: "space-y-2 border border-gray-300 rounded-lg p-2",
                     label {
@@ -143,7 +174,10 @@ fn App() -> Element {
                 div { class: "flex justify-start",
                     button {
                         class: "bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
-                        onclick: move |_| color.write().flip(),
+                        onclick: move |_| {
+                            let inverted_color = player_color.read().inv();
+                            *player_color.write() = inverted_color;
+                        },
                         "Flip the board"
                     }
                 }
@@ -171,7 +205,9 @@ fn App() -> Element {
                                 value: "default",
                                 checked: true,
                                 oninput: move |_ev| {
-                                    *action.write() = Some(Action::set_position(ChessboardProps::default_position()));
+                                    *action.write() = Some(
+                                        Action::set_position(ChessboardProps::default_position()),
+                                    );
                                 },
                             }
                             span { class: "ml-2 text-gray-700", "Starting position" }
@@ -198,7 +234,7 @@ fn App() -> Element {
                                 value: "promotion",
                                 oninput: move |_ev| {
                                     *action.write() = Some(Action::set_position(&promotion));
-                                } ,
+                                },
                             }
                             span { class: "ml-2 text-gray-700", "Test Promotion" }
                         }

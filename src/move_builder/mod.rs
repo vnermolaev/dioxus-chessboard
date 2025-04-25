@@ -1,9 +1,8 @@
 use crate::chessboard::SanMove;
 use crate::move_builder::state::State;
-use crate::PlayerColor;
 use dioxus::prelude::Coroutine;
 use owlchess::moves::{san, PromotePiece, Style};
-use owlchess::{Board, Coord, Move};
+use owlchess::{Board, Color, Coord, Move};
 use std::ops::{Deref, DerefMut};
 
 mod applicable_move;
@@ -11,10 +10,10 @@ mod promotion;
 mod state;
 
 pub struct MoveBuilder {
-    /// When the move reaches [State::ApplicableMove],
+    /// When the move reaches [`State::ApplicableMove`],
     /// the corresponding SAN will be sent out.
     san_move_tx: Option<Coroutine<SanMove>>,
-    /// [State] of the builder.
+    /// [`State`] of the builder.
     state: State,
 }
 
@@ -84,7 +83,7 @@ impl MoveBuilder {
     }
 
     /// Computes a displacement in percentage for animation with its source at a given [Coord].
-    pub fn animation_displacement(&self, source: Coord, color: PlayerColor) -> Option<(i16, i16)> {
+    pub fn animation_displacement(&self, source: Coord, color: Color) -> Option<(i16, i16)> {
         fn coord_diff(c1: Coord, c2: Coord) -> (i16, i16) {
             (
                 c1.file() as i16 - c2.file() as i16,
@@ -94,11 +93,7 @@ impl MoveBuilder {
 
         self.find_animation(source).map(|dst| {
             let (x, y) = coord_diff(dst, source);
-            let c = if let PlayerColor::White = color {
-                1
-            } else {
-                -1
-            };
+            let c = if let Color::White = color { 1 } else { -1 };
             (c * x * 100, c * y * 100)
         })
     }

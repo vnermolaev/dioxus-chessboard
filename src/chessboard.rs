@@ -7,7 +7,7 @@ use crate::square::Square;
 use crate::PieceSet;
 use dioxus::prelude::*;
 use owlchess::board::PrettyStyle;
-use owlchess::{Coord, File, Rank};
+use owlchess::{Color, Coord, File, Rank};
 use std::fmt::{Debug, Display};
 use std::ops::Deref;
 use std::sync::atomic::AtomicU32;
@@ -22,6 +22,7 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
     let props = props.complete();
     debug!("Rendering with properties: {props:#?}");
 
+    // Initialize the move history.
     use_context_provider(|| {
         Signal::new(
             HistoricalBoard::from_fen(&props.starting_position)
@@ -29,28 +30,22 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
         )
     });
 
-    let board = use_context::<Signal<HistoricalBoard>>();
-
+    // Initialize the move builder.
     use_context_provider(|| Signal::new(MoveBuilder::new(props.san_tx)));
 
     let mut historical_board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
 
     if let Some(action) = props.action {
-        maybe_update_board(
-            action,
-            props.is_interactive,
-            &mut historical_board,
-            &mut move_builder,
-        );
+        maybe_update_board(action, &mut historical_board, &mut move_builder);
     }
 
     let (files, ranks) = match props.color {
-        PlayerColor::White => (
+        Color::White => (
             File::iter().collect::<Vec<_>>(),
             Rank::iter().collect::<Vec<_>>(),
         ),
-        PlayerColor::Black => (
+        Color::Black => (
             File::iter().collect::<Vec<_>>().into_iter().rev().collect(),
             Rank::iter().collect::<Vec<_>>().into_iter().rev().collect(),
         ),
@@ -63,6 +58,19 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
         chessboard_classes.push("opacity-25");
     }
 
+    // Compute if the board is interactive.
+    let is_interactive = {
+        let side_to_move = historical_board.read().side_to_move();
+
+        // Board is interactive if
+        // - it is configured to be interactive, and
+        // - either it is in the analysis mode,
+        // - or
+        //   - it is in the single player mode, and
+        //   - the next move is expected from the configured player.
+        props.is_interactive && (side_to_move == props.color || !props.single_player_mode)
+    };
+
     rsx! {
         document::Link { rel: "stylesheet", href: CHESSBOARD_STYLES }
 
@@ -72,7 +80,7 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
                     div { class: "row",
                         for f in files.iter().cloned() {
                             Square {
-                                is_interactive: props.is_interactive,
+                                is_interactive,
                                 coord: Coord::from_parts(f, r),
                                 color: props.color,
                                 pieces_set: props.pieces_set,
@@ -93,7 +101,6 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
 /// If the board is not interactive, mark the action as processed.
 fn maybe_update_board(
     action: Action,
-    is_interactive: bool,
     historical_board: &mut Signal<HistoricalBoard>,
     move_builder: &mut Signal<MoveBuilder>,
 ) {
@@ -103,16 +110,12 @@ fn maybe_update_board(
     }
     PROCESSED_ACTION.store(action.discriminator, Relaxed);
 
-    // if !is_interactive {
-    //     debug!("Chessboard is not interactive. Ignoring the request...");
-    //     return;
-    // }
-
     debug!("Received action: {action:?}");
 
     match action.action {
-        ActionInner::MakeSanMove(san) if is_interactive => {
+        ActionInner::MakeSanMove(san) => {
             let board = historical_board.read();
+
             if move_builder.write().apply_san_move(&san, &board).is_ok() {
                 info!("Injected move: {san}");
             } else {
@@ -122,13 +125,13 @@ fn maybe_update_board(
                 );
             }
         }
-        ActionInner::RevertMove if is_interactive => {
+        ActionInner::RevertMove => {
             let board = historical_board.read();
             if let Some(m) = board.last_move() {
                 move_builder.write().revert_move(m);
             }
         }
-        ActionInner::SetPosition(fen) => {
+        ActionInner::SetPosition { fen } => {
             *historical_board.write() = HistoricalBoard::from_fen(&fen)
                 .expect("Valid FEN position description is expected");
         }
@@ -145,14 +148,19 @@ pub struct ChessboardProps {
     /// If you only need to display a position, set this to false.
     /// By default, the board will be interactive.
     is_interactive: Option<bool>,
-    /// Color the player plays for, i.e., pieces at the bottom.
-    color: PlayerColor,
+    /// [`Color`] the player plays for, i.e., pieces at the bottom.
+    player_color: Color,
+
+    /// In single player mode, the player will only be able to move pieces of the `player_color`.
+    /// Otherwise, the board allows all moves.
+    single_player_mode: Option<bool>,
+
     /// The starting position in FEN notation.
     ///
     /// **IMPORTANT:** This value sets only the initial position.
     /// The chessboard component will not update if the user changes this starting position,
     /// because it initializes an internal state that remains immutable with respect to property changes.
-    /// To update the position of an existing component, use [Action::set_position].
+    /// To update the position of an existing component, use [`Action::set_position`].
     starting_position: Option<String>,
     /// Pieces set.
     pieces_set: Option<PieceSet>,
@@ -166,7 +174,9 @@ impl ChessboardProps {
     fn complete(self) -> CompleteChessboardProps {
         CompleteChessboardProps {
             is_interactive: self.is_interactive.unwrap_or(true),
-            color: self.color,
+            color: self.player_color,
+            // By default, allow exploration mode.
+            single_player_mode: self.single_player_mode.unwrap_or_default(),
             starting_position: self
                 .starting_position
                 .unwrap_or_else(|| Self::default_position().to_string()),
@@ -244,10 +254,12 @@ impl Action {
         }
     }
 
-    pub fn set_position(position: &str) -> Action {
+    pub fn set_position(fen: &str) -> Action {
         Self {
             discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
-            action: ActionInner::SetPosition(position.to_string()),
+            action: ActionInner::SetPosition {
+                fen: fen.to_string(),
+            },
         }
     }
 }
@@ -257,13 +269,17 @@ impl Action {
 pub(crate) enum ActionInner {
     MakeSanMove(String),
     RevertMove,
-    SetPosition(String),
+    SetPosition {
+        /// String FEN representation of the position.
+        fen: String,
+    },
 }
 
 /// Complete properties with absent optional values of [ChessboardProps] filled with default values.
 struct CompleteChessboardProps {
     is_interactive: bool,
-    color: PlayerColor,
+    color: Color,
+    single_player_mode: bool,
     /// Starting position in FEN notation.
     starting_position: String,
     pieces_set: PieceSet,
@@ -276,34 +292,10 @@ impl Debug for CompleteChessboardProps {
         f.debug_struct("CompleteChessboardProps")
             .field("is_interactive", &self.is_interactive)
             .field("color", &self.color)
+            .field("single_player_mode", &self.single_player_mode)
             .field("starting position", &self.starting_position)
             .field("pieces_set", &self.pieces_set)
             .field("action", &self.action)
             .finish()
-    }
-}
-
-/// Color of the player's pieces.
-#[derive(PartialEq, Clone, Copy, Debug)]
-pub enum PlayerColor {
-    White,
-    Black,
-}
-
-impl PlayerColor {
-    pub fn flip(&mut self) {
-        match self {
-            Self::White => *self = Self::Black,
-            Self::Black => *self = Self::White,
-        }
-    }
-}
-
-impl Display for PlayerColor {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::White => write!(f, "White"),
-            Self::Black => write!(f, "Black"),
-        }
     }
 }
