@@ -36,8 +36,26 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
     let mut historical_board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
 
+    // Compute if the board is interactive.
+    let is_interactive = {
+        let side_to_move = historical_board.read().side_to_move();
+
+        // Board is interactive if
+        // - it is configured to be interactive, and
+        // - either it is in the analysis mode,
+        // - or
+        //   - it is in the single player mode, and
+        //   - the next move is expected from the configured player.
+        props.is_interactive && (side_to_move == props.color || !props.single_player_mode)
+    };
+
     if let Some(action) = props.action {
-        maybe_update_board(action, &mut historical_board, &mut move_builder);
+        // If board is interactive, the `action` must be applied.
+        // if board in non-interactive,
+        //      but the `action` does not concern moving pieces, the `action` must be applied.
+        if is_interactive || !action.is_move() {
+            maybe_update_board(action, &mut historical_board, &mut move_builder);
+        }
     }
 
     let (files, ranks) = match props.color {
@@ -57,19 +75,6 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
         // Promotion is required.
         chessboard_classes.push("opacity-25");
     }
-
-    // Compute if the board is interactive.
-    let is_interactive = {
-        let side_to_move = historical_board.read().side_to_move();
-
-        // Board is interactive if
-        // - it is configured to be interactive, and
-        // - either it is in the analysis mode,
-        // - or
-        //   - it is in the single player mode, and
-        //   - the next move is expected from the configured player.
-        props.is_interactive && (side_to_move == props.color || !props.single_player_mode)
-    };
 
     rsx! {
         document::Link { rel: "stylesheet", href: CHESSBOARD_STYLES }
@@ -98,7 +103,6 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
 
 /// Examine [Action] and apply respective changes if the action has not yet been processed.
 /// If the action was processed, does nothing.
-/// If the board is not interactive, mark the action as processed.
 fn maybe_update_board(
     action: Action,
     historical_board: &mut Signal<HistoricalBoard>,
@@ -134,9 +138,6 @@ fn maybe_update_board(
         ActionInner::SetPosition { fen } => {
             *historical_board.write() = HistoricalBoard::from_fen(&fen)
                 .expect("Valid FEN position description is expected");
-        }
-        _ => {
-            debug!("Chessboard is not interactive. Ignoring the request...");
         }
     }
 }
@@ -261,6 +262,14 @@ impl Action {
                 fen: fen.to_string(),
             },
         }
+    }
+
+    /// Returns true if action requires making a move.
+    pub fn is_move(&self) -> bool {
+        matches!(
+            self.action,
+            ActionInner::MakeSanMove(_) | ActionInner::RevertMove
+        )
     }
 }
 
