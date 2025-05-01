@@ -9,7 +9,6 @@ use dioxus::prelude::*;
 use owlchess::board::PrettyStyle;
 use owlchess::{Color, Coord, File, Rank};
 use std::fmt::{Debug, Display};
-use std::ops::Deref;
 use std::sync::atomic::AtomicU32;
 use std::sync::atomic::Ordering::Relaxed;
 use tracing::{debug, info, warn};
@@ -36,7 +35,7 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
     let mut historical_board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
 
-    // Compute if the board is interactive.
+    // Compute if the board is interactive for the **player**.
     let is_interactive = {
         let side_to_move = historical_board.read().side_to_move();
 
@@ -44,18 +43,14 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
         // - it is configured to be interactive, and
         // - either it is in the analysis mode,
         // - or
-        //   - it is in the single player mode, and
         //   - the next move is expected from the configured player.
-        props.is_interactive && (side_to_move == props.color || !props.single_player_mode)
+        // (general interactivity)   (analysis mode)          (a right color piece move)
+        props.is_interactive && (!props.single_player_mode || side_to_move == props.color)
     };
 
     if let Some(action) = props.action {
-        // If board is interactive, the `action` must be applied.
-        // if board in non-interactive,
-        //      but the `action` does not concern moving pieces, the `action` must be applied.
-        if is_interactive || !action.is_move() {
-            maybe_update_board(action, &mut historical_board, &mut move_builder);
-        }
+        // Board always accepts actions.
+        maybe_update_board(action, &mut historical_board, &mut move_builder);
     }
 
     let (files, ranks) = match props.color {
@@ -194,28 +189,18 @@ impl ChessboardProps {
 /// SAN-encoded chess move.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SanMove {
-    san_repr: String,
-    piece: owlchess::Piece,
+    pub san_repr: String,
+    pub piece: owlchess::Piece,
+    pub color: Color,
 }
 
 impl SanMove {
-    pub fn new(san_repr: &str, piece: owlchess::Piece) -> Self {
+    pub fn new(san_repr: &str, piece: owlchess::Piece, color: Color) -> Self {
         Self {
             san_repr: san_repr.to_string(),
             piece,
+            color,
         }
-    }
-
-    pub fn piece(&self) -> owlchess::Piece {
-        self.piece
-    }
-}
-
-impl Deref for SanMove {
-    type Target = String;
-
-    fn deref(&self) -> &Self::Target {
-        &self.san_repr
     }
 }
 

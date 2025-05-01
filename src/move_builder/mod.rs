@@ -108,12 +108,17 @@ impl MoveBuilder {
                 .expect("Move must be correctly finalized")
                 .to_string();
 
-            let piece = board
-                .get(m.src())
+            let src_cell = board.get(m.src());
+
+            let piece = src_cell
                 .piece()
                 .expect("Move is valid, thus src must contain a piece");
 
-            san_move_tx.send(SanMove::new(&san_repr, piece));
+            let color = src_cell
+                .color()
+                .expect("Move is valid, thus src must contain a piece");
+
+            san_move_tx.send(SanMove::new(&san_repr, piece, color));
         }
 
         m
