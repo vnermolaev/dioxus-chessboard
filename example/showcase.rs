@@ -10,6 +10,11 @@ use futures_util::StreamExt;
 /// Classes to render the chessboard.
 const STYLE_CSS: Asset = asset!("/example/dist.css");
 
+const LEFT: Asset = asset!("/example/img/left.svg");
+const LEFT_WALL: Asset = asset!("/example/img/left_to_the_wall.svg");
+const RIGHT: Asset = asset!("/example/img/right.svg");
+const RIGHT_WALL: Asset = asset!("/example/img/right_to_the_wall.svg");
+
 fn main() {
     dioxus_logger::init(Level::DEBUG).expect("failed to init logger");
     launch(App);
@@ -170,29 +175,6 @@ fn App() -> Element {
                     p { class: "text-gray-500 text-sm", "Try a popular first move for white \"e4\"" }
                 }
 
-                // Flip the Board Button
-                div { class: "flex justify-start",
-                    button {
-                        class: "bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
-                        onclick: move |_| {
-                            let inverted_color = player_color.read().inv();
-                            *player_color.write() = inverted_color;
-                        },
-                        "Flip the board"
-                    }
-                }
-
-                // Go back.
-                div { class: "flex justify-start",
-                    button {
-                        class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded",
-                        onclick: move |_| {
-                            *action.write() = Some(Action::revert_move());
-                        },
-                        "Revert last move"
-                    }
-                }
-
                 // Positions Radio Input
                 div { class: "space-y-2 border border-gray-300 rounded-lg p-2",
                     label { class: "block text-gray-700 font-semibold", "Positions" }
@@ -238,6 +220,81 @@ fn App() -> Element {
                             }
                             span { class: "ml-2 text-gray-700", "Test Promotion" }
                         }
+                    }
+                }
+
+                // Navigation
+                div { class: "space-y-2 border border-gray-300 rounded-lg p-2",
+                    label { class: "block text-gray-700 font-semibold", "Navigation" }
+                    div { class: "inline-flex items-center gap-2 rounded-lg bg-gray-100 p-2 shadow",
+
+                        // «| (to first / “left-to-the-wall”)
+                        button {
+                            class: "p-1 rounded transition filter hover:bg-gray-400",
+                            onclick: move |_| action.set(Some(Action::set_start_position())),
+                            img {
+                                src: LEFT_WALL,
+                                alt: "First",
+                                class: "select-none",
+                            }
+                        }
+
+                        // ‹ (previous / “left”)
+                        button {
+                            class: "p-1 rounded transition filter hover:bg-gray-400",
+                            onclick: move |_| action.set(Some(Action::prev())),
+                            img {
+                                src: LEFT,
+                                alt: "Previous",
+                                class: "select-none",
+                            }
+                        }
+
+                        // › (next / “right”)
+                        button {
+                            class: "p-1 rounded transition filter hover:bg-gray-400",
+                            onclick: move |_| action.set(Some(Action::next())),
+                            img {
+                                src: RIGHT,
+                                alt: "Next",
+                                class: "select-none",
+                            }
+                        }
+
+                        // |» (to last / “right-to-the-wall”)
+                        button {
+                            class: "p-1 rounded transition filter hover:bg-gray-400",
+                            onclick: move |_| action.set(Some(Action::set_end_position())),
+                            img {
+                                src: RIGHT_WALL,
+                                alt: "Last",
+                                class: "select-none",
+                            }
+                        }
+                    }
+                }
+
+
+                // Flip the Board Button
+                div { class: "flex justify-start",
+                    button {
+                        class: "bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
+                        onclick: move |_| {
+                            let inverted_color = player_color.read().inv();
+                            *player_color.write() = inverted_color;
+                        },
+                        "Flip the board"
+                    }
+                }
+
+                // Go back.
+                div { class: "flex justify-start",
+                    button {
+                        class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded",
+                        onclick: move |_| {
+                            *action.write() = Some(Action::revert_move());
+                        },
+                        "Revert last move"
                     }
                 }
             }

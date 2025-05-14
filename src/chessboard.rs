@@ -105,6 +105,7 @@ fn maybe_update_board(
 ) {
     let processed_action = PROCESSED_ACTION.load(Relaxed);
     if processed_action == action.discriminator {
+        debug!("Action {action:?} has already been processed");
         return;
     }
     PROCESSED_ACTION.store(action.discriminator, Relaxed);
@@ -131,9 +132,15 @@ fn maybe_update_board(
             }
         }
         ActionInner::SetPosition { fen } => {
-            *historical_board.write() = HistoricalBoard::from_fen(&fen)
-                .expect("Valid FEN position description is expected");
+            historical_board.set(
+                HistoricalBoard::from_fen(&fen)
+                    .expect("Valid FEN position description is expected"),
+            );
         }
+        ActionInner::SetStartPosition => historical_board.write().set_start(),
+        ActionInner::Prev => historical_board.write().set_prev(),
+        ActionInner::Next => historical_board.write().set_next(),
+        ActionInner::SetEndPosition => historical_board.write().set_end(),
     }
 }
 
@@ -249,12 +256,32 @@ impl Action {
         }
     }
 
-    /// Returns true if action requires making a move.
-    pub fn is_move(&self) -> bool {
-        matches!(
-            self.action,
-            ActionInner::MakeSanMove(_) | ActionInner::RevertMove
-        )
+    pub fn set_start_position() -> Action {
+        Self {
+            discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
+            action: ActionInner::SetStartPosition,
+        }
+    }
+
+    pub fn set_end_position() -> Action {
+        Self {
+            discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
+            action: ActionInner::SetEndPosition,
+        }
+    }
+
+    pub fn prev() -> Action {
+        Self {
+            discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
+            action: ActionInner::Prev,
+        }
+    }
+
+    pub fn next() -> Action {
+        Self {
+            discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
+            action: ActionInner::Next,
+        }
     }
 }
 
@@ -267,6 +294,10 @@ pub(crate) enum ActionInner {
         /// String FEN representation of the position.
         fen: String,
     },
+    Prev,
+    Next,
+    SetStartPosition,
+    SetEndPosition,
 }
 
 /// Complete properties with absent optional values of [ChessboardProps] filled with default values.
