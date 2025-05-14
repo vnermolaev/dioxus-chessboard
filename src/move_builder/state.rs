@@ -6,7 +6,7 @@ use owlchess::moves::{san, PromotePiece};
 use owlchess::{Board, Color, Coord, Move, Piece, Rank};
 use tracing::{debug, warn};
 
-/// Builder for [Move] structured as a [State] machine:
+/// Builder for [Move] structured as a [MoveBuilder] machine:
 ///
 ///                ┌──────────────┐
 ///                │     None     ◄──────────────────────────┐
@@ -39,17 +39,43 @@ use tracing::{debug, warn};
 ///           └──►   ApplicableMove  ◄──┘                    │
 ///              └──────────┬────────┘                       │
 ///                         │                                │
-///                         └────────────────────────────────►
+///                         └────────── Animation ───────────►
 ///
 #[derive(Debug)]
-pub enum State {
+pub enum MoveBuilder {
     None,
     Src(Coord),
     Promotion(Promotion),
     ApplicableMove(ApplicableMove),
 }
 
-impl State {
+// TODO Review these old functions
+impl MoveBuilder {
+    /// Find a destination [`Coord`] for an animation with its source at a given [`Coord`], if it exists.
+    pub fn find_animation(&self, source: Coord) -> Option<Coord> {
+        self.animations()
+            .iter()
+            .find_map(|(src, dst)| if *src == source { Some(*dst) } else { None })
+    }
+
+    /// Computes a displacement in percentage for animation with its source at a given [`Coord`].
+    pub fn animation_displacement(&self, source: Coord, color: Color) -> Option<(i16, i16)> {
+        fn coord_diff(c1: Coord, c2: Coord) -> (i16, i16) {
+            (
+                c1.file() as i16 - c2.file() as i16,
+                c1.rank() as i16 - c2.rank() as i16,
+            )
+        }
+
+        self.find_animation(source).map(|dst| {
+            let (x, y) = coord_diff(dst, source);
+            let c = if let Color::White = color { 1 } else { -1 };
+            (c * x * 100, c * y * 100)
+        })
+    }
+}
+
+impl MoveBuilder {
     pub(crate) fn new() -> Self {
         Self::None
     }
@@ -85,7 +111,7 @@ impl State {
         )
     }
 
-    /// Puts a square into [State].
+    /// Puts a square into [MoveBuilder].
     pub(crate) fn put_square_coord(&mut self, coord: Coord, board: &Board) {
         *self = match self {
             // Start building a move by selecting a piece.
@@ -157,6 +183,8 @@ impl State {
         Ok(())
     }
 
+    /// [`MoveBuilder`] manages all animations, thus reverting the move also goes via the builder
+    /// to produce a correct animation.
     pub(crate) fn revert_move(&mut self, m: Move) {
         let m = unsafe { Move::new_unchecked(m.kind(), m.src_cell(), m.dst(), m.src()) };
         *self = Self::ApplicableMove(ApplicableMove::Revert(m));

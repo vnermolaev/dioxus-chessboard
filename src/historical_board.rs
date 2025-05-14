@@ -1,5 +1,7 @@
+use crate::SanMove;
+use dioxus::hooks::Coroutine;
 use owlchess::board::{FenParseError, PrettyStyle};
-use owlchess::moves::ValidateError;
+use owlchess::moves::{Style, ValidateError};
 use owlchess::{Board, Color, Move};
 use std::fmt::Display;
 use std::ops::Deref;
@@ -8,6 +10,8 @@ use thiserror::Error;
 use tracing::debug;
 
 pub struct HistoricalBoard {
+    /// When a move is successfully applied, it will be reported to this channel.
+    pub(crate) move_tx: Option<Coroutine<SanMove>>,
     h: usize,
     /// A sequence of [`Board`]'s and associated [`Move`]'s which brings to the next version of [`Board`].
     /// until the value in `board` is produced.
@@ -20,9 +24,13 @@ impl HistoricalBoard {
     const INVARIANT_LAST_BUT_1_IS_INTERMEDIATE: &'static str =
         "[BUG] Last but one historical element must be intermediate step";
     /// Construct a new board from FEN notation.
-    pub fn from_fen(fen: &str) -> Result<Self, HistoricalBoardError> {
+    pub fn from_fen(
+        fen: &str,
+        move_tx: Option<Coroutine<SanMove>>,
+    ) -> Result<Self, HistoricalBoardError> {
         Board::from_str(fen)
             .map(|board| Self {
+                move_tx,
                 h: 0,
                 history: vec![Step::Last(board)],
             })
@@ -49,7 +57,7 @@ impl HistoricalBoard {
 
         let step = self.history.pop().expect(Self::INVARIANT_AT_LEAST_1_STEP);
 
-        let board = step.dissolve();
+        let board = step.to_board();
 
         let new_board = board.make_move(m)?;
 
@@ -58,6 +66,8 @@ impl HistoricalBoard {
         self.history.push(Step::Last(new_board));
 
         self.h = self.history.len() - 1;
+
+        self.report_move();
 
         Ok(())
     }
@@ -75,7 +85,7 @@ impl HistoricalBoard {
         let last_but_1 = self.history.pop();
 
         let (board, m) = match last_but_1 {
-            None => (last.dissolve(), None),
+            None => (last.to_board(), None),
             Some(Step::Intermediate(board, m)) => (board, Some(m)),
             Some(Step::Last(_)) => unreachable!("{}", Self::INVARIANT_LAST_BUT_1_IS_INTERMEDIATE),
         };
@@ -115,11 +125,45 @@ impl HistoricalBoard {
         )
     }
 
+    fn last_intermediate_step(&self) -> Option<(&Board, &Move)> {
+        if let [.., Step::Intermediate(board, m), Step::Last(_)] = &self.history[..] {
+            Some((board, m))
+        } else {
+            None
+        }
+    }
+
     fn current_board(&self) -> &Board {
         if let [.., Step::Last(board)] = &self.history[..] {
             board
         } else {
             panic!("[BUG] History must have last step");
+        }
+    }
+
+    fn report_move(&self) {
+        if let Some(ref tx) = self.move_tx {
+            let Some((board, m)) = self.last_intermediate_step() else {
+                return;
+            };
+
+            // There is a valid move and a coroutine to report it.
+            let san_repr = m
+                .styled(board, Style::San)
+                .expect("Board and move form a valid intermediate step")
+                .to_string();
+
+            let src_cell = board.get(m.src());
+
+            let piece = src_cell
+                .piece()
+                .expect("Move is valid, thus src must contain a piece");
+
+            let color = src_cell
+                .color()
+                .expect("Move is valid, thus src must contain a piece");
+
+            tx.send(SanMove::new(&san_repr, piece, color));
         }
     }
 }
@@ -144,7 +188,7 @@ enum Step {
 }
 
 impl Step {
-    fn dissolve(self) -> Board {
+    fn to_board(self) -> Board {
         match self {
             Step::Last(board) => board,
             Step::Intermediate(board, _) => board,

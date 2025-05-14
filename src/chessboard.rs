@@ -24,13 +24,13 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
     // Initialize the move history.
     use_context_provider(|| {
         Signal::new(
-            HistoricalBoard::from_fen(&props.starting_position)
+            HistoricalBoard::from_fen(&props.starting_position, props.san_tx)
                 .expect("Valid FEN position description is expected"),
         )
     });
 
     // Initialize the move builder.
-    use_context_provider(|| Signal::new(MoveBuilder::new(props.san_tx)));
+    use_context_provider(|| Signal::new(MoveBuilder::new()));
 
     let mut historical_board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
@@ -132,8 +132,10 @@ fn maybe_update_board(
             }
         }
         ActionInner::SetPosition { fen } => {
+            let move_tx = historical_board.read().move_tx.clone();
+
             historical_board.set(
-                HistoricalBoard::from_fen(&fen)
+                HistoricalBoard::from_fen(&fen, move_tx)
                     .expect("Valid FEN position description is expected"),
             );
         }
