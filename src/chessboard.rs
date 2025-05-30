@@ -152,11 +152,8 @@ fn maybe_update_board(
                 move_builder.write().step_forward(m);
             }
         }
-
-        _ => unimplemented!(),
-        // ActionInner::StepForward => historical_board.write().set_next(),
-        // ActionInner::SetStartPosition => historical_board.write().set_start(),
-        // ActionInner::SetEndPosition => historical_board.write().set_end(),
+        ActionInner::SetStartPosition => historical_board.write().set_start(),
+        ActionInner::SetEndPosition => historical_board.write().set_end(),
     }
 }
 
