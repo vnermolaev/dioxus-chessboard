@@ -190,6 +190,16 @@ impl MoveBuilder {
         *self = Self::ApplicableMove(ApplicableMove::Revert(m));
     }
 
+    pub(crate) fn step_back(&mut self, m: Move) {
+        let m = unsafe { Move::new_unchecked(m.kind(), m.src_cell(), m.dst(), m.src()) };
+        *self = Self::ApplicableMove(ApplicableMove::Previous(m));
+    }
+
+    pub(crate) fn step_forward(&mut self, m: Move) {
+        let m = unsafe { Move::new_unchecked(m.kind(), m.src_cell(), m.src(), m.dst()) };
+        *self = Self::ApplicableMove(ApplicableMove::Next(m));
+    }
+
     pub(crate) fn check_promotion(&self) -> Option<(Coord, Coord)> {
         match self {
             Self::Promotion(promotion @ Promotion::Promotion { .. }) => {
@@ -258,6 +268,8 @@ impl MoveBuilder {
                         MoveAction::Apply(*m)
                     }
                     ApplicableMove::Revert(_) => MoveAction::Revert,
+                    ApplicableMove::Previous(_) => MoveAction::StepBack,
+                    ApplicableMove::Next(_) => MoveAction::StepForward,
                 };
                 *self = Self::None;
                 action

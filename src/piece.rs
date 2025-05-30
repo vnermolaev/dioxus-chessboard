@@ -22,6 +22,8 @@ pub(crate) fn Piece(props: PieceProps) -> Element {
 
     let mut board = use_context::<Signal<HistoricalBoard>>();
 
+    let a = board.read().get(props.coord);
+
     let Some(img_src) = compute_piece_img_src(props.pieces_set, board.read().get(props.coord))
     else {
         return rsx! {};

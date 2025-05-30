@@ -12,7 +12,7 @@ use tracing::debug;
 pub struct HistoricalBoard {
     /// When a move is successfully applied, it will be reported to this channel.
     pub(crate) move_tx: Option<Coroutine<SanMove>>,
-    h: usize,
+    step_pointer: usize,
     /// A sequence of [`Board`]'s and associated [`Move`]'s which brings to the next version of [`Board`].
     /// until the value in `board` is produced.
     /// INVARIANT: Length of the history is at least 1.
@@ -24,22 +24,24 @@ impl HistoricalBoard {
     const INVARIANT_LAST_BUT_1_IS_INTERMEDIATE: &'static str =
         "[BUG] Last but one historical element must be intermediate step";
     /// Construct a new board from FEN notation.
-    pub fn from_fen(
+    pub fn initialize(
         fen: &str,
         move_tx: Option<Coroutine<SanMove>>,
     ) -> Result<Self, HistoricalBoardError> {
         Board::from_str(fen)
             .map(|board| Self {
                 move_tx,
-                h: 0,
+                step_pointer: 0,
                 history: vec![Step::Last(board)],
             })
             .map_err(HistoricalBoardError::Fen)
     }
 
-    /// Tries to apply a [`Move`] to the inner [`Board`],
-    /// if successful, pushed the old [`Board`] and the applied [`Move`] to history.
+    /// Tries to apply a [`Move`] to the [`Board`], which is currently pointed to by the step pointer.
+    /// [`Step`]'s after the step pointer are discarded and the injected moved with the new [`Board`] become the last [`Step`].
     pub fn make_move(&mut self, m: Move) -> Result<(), HistoricalBoardError> {
+        debug!("Making a move {m:?}");
+
         // let step = self
         //     .history
         //     .get(self.h)
@@ -53,7 +55,8 @@ impl HistoricalBoard {
         // // Now, move `m` is either applied to the last board or an intermediate board.
         // // In the latter case the applied move is different from the expected move, so the history must be invalidated
 
-        self.history.truncate(self.h + 1);
+        // 1 is added because the argument represents the length if the vector after truncation.
+        self.history.truncate(self.step_pointer + 1);
 
         let step = self.history.pop().expect(Self::INVARIANT_AT_LEAST_1_STEP);
 
@@ -65,11 +68,81 @@ impl HistoricalBoard {
 
         self.history.push(Step::Last(new_board));
 
-        self.h = self.history.len() - 1;
+        self.step_pointer = self.history.len() - 1;
 
+        // TODO think how to correctly report new moves and navigation acts.
         self.report_move();
 
         Ok(())
+    }
+
+    /// Insights to the history.
+    ///
+    /// Returns the [`Move`] associated with the [`Step`] that immediately precedes
+    /// the [`Step`] currently pointed to by the step pointer.
+    pub fn get_previous_move(&self) -> Option<Move> {
+        debug!(
+            "Get previous move: pointer = {}/{}",
+            self.step_pointer,
+            self.history.len() - 1
+        );
+
+        if self.step_pointer == 0 {
+            return None;
+        }
+
+        self.history
+            .get(self.step_pointer.saturating_sub(1))
+            .and_then(|s| s.as_move())
+            .inspect(|m| debug!("Previous move: {m:?}"))
+    }
+
+    /// Insights to the history.
+    ///
+    /// Returns the [`Move`] associated with the [`Step`] that immediately follows
+    /// the [`Step`] currently pointed to by the step pointer.
+    pub fn get_next_move(&self) -> Option<Move> {
+        debug!(
+            "Get next move: pointer = {}/{}",
+            self.step_pointer,
+            self.history.len() - 1
+        );
+
+        if self.step_pointer == self.history.len() - 1 {
+            return None;
+        }
+
+        self.history
+            .get(self.step_pointer)
+            .and_then(|s| s.as_move())
+            .inspect(|m| debug!("Next move: {m:?}"))
+    }
+
+    /// Navigation through the history.
+    ///
+    /// Decrements the step pointer.
+    pub fn step_back(&mut self) {
+        self.step_pointer = self.step_pointer.saturating_sub(1);
+        debug!(
+            "Stepping back: new pointer = {}/{}",
+            self.step_pointer,
+            self.history.len() - 1
+        );
+    }
+
+    /// Navigation through the history.
+    ///
+    /// Increments the step pointer,
+    /// provided the step pointer is not pointing to the last [`Step`].
+    pub fn step_forward(&mut self) {
+        if self.step_pointer < self.history.len() - 1 {
+            self.step_pointer += 1;
+        }
+        debug!(
+            "Stepping forward: new pointer = {}/{}",
+            self.step_pointer,
+            self.history.len() - 1
+        );
     }
 
     pub fn last_move(&self) -> Option<Move> {
@@ -81,6 +154,8 @@ impl HistoricalBoard {
     }
 
     pub fn revert_last_move(&mut self) -> Option<Move> {
+        debug!("Reverting the last move");
+
         let last = self.history.pop().expect(Self::INVARIANT_AT_LEAST_1_STEP);
         let last_but_1 = self.history.pop();
 
@@ -91,7 +166,7 @@ impl HistoricalBoard {
         };
 
         self.history.push(Step::Last(board));
-        self.h = self.history.len() - 1;
+        self.step_pointer = self.history.len() - 1;
 
         m
     }
@@ -101,20 +176,11 @@ impl HistoricalBoard {
     }
 
     pub fn set_start(&mut self) {
-        self.h = 0;
-    }
-
-    pub fn set_prev(&mut self) {
-        debug!("Set prev call");
-        self.h = self.h.saturating_sub(1);
-    }
-
-    pub fn set_next(&mut self) {
-        self.h = self.h.saturating_add(1);
+        self.step_pointer = 0;
     }
 
     pub fn set_end(&mut self) {
-        self.h = self.history.len() - 1;
+        self.step_pointer = self.history.len() - 1;
     }
 
     fn represent_current_board(&self) -> String {
@@ -139,6 +205,13 @@ impl HistoricalBoard {
         } else {
             panic!("[BUG] History must have last step");
         }
+    }
+
+    fn current_board_view(&self) -> &Board {
+        self.history
+            .get(self.step_pointer)
+            .expect("Step pointer out of bounds")
+            .as_board()
     }
 
     fn report_move(&self) {
@@ -178,7 +251,7 @@ impl Deref for HistoricalBoard {
     type Target = Board;
 
     fn deref(&self) -> &Self::Target {
-        self.current_board()
+        self.current_board_view()
     }
 }
 
@@ -189,6 +262,20 @@ enum Step {
 
 impl Step {
     fn to_board(self) -> Board {
+        match self {
+            Step::Last(board) => board,
+            Step::Intermediate(board, _) => board,
+        }
+    }
+
+    fn as_move(&self) -> Option<Move> {
+        match self {
+            Step::Last(_) => None,
+            Step::Intermediate(_, m) => Some(*m),
+        }
+    }
+
+    fn as_board(&self) -> &Board {
         match self {
             Step::Last(board) => board,
             Step::Intermediate(board, _) => board,

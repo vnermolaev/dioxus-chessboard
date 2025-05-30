@@ -24,7 +24,7 @@ pub fn Chessboard(props: ChessboardProps) -> Element {
     // Initialize the move history.
     use_context_provider(|| {
         Signal::new(
-            HistoricalBoard::from_fen(&props.starting_position, props.san_tx)
+            HistoricalBoard::initialize(&props.starting_position, props.san_tx)
                 .expect("Valid FEN position description is expected"),
         )
     });
@@ -125,24 +125,38 @@ fn maybe_update_board(
                 );
             }
         }
+
         ActionInner::RevertMove => {
-            let board = historical_board.read();
-            if let Some(m) = board.last_move() {
+            if let Some(m) = historical_board.read().last_move() {
                 move_builder.write().revert_move(m);
             }
         }
+
         ActionInner::SetPosition { fen } => {
-            let move_tx = historical_board.read().move_tx.clone();
+            let move_tx = historical_board.write().move_tx.take();
 
             historical_board.set(
-                HistoricalBoard::from_fen(&fen, move_tx)
+                HistoricalBoard::initialize(&fen, move_tx)
                     .expect("Valid FEN position description is expected"),
             );
         }
-        ActionInner::SetStartPosition => historical_board.write().set_start(),
-        ActionInner::Prev => historical_board.write().set_prev(),
-        ActionInner::Next => historical_board.write().set_next(),
-        ActionInner::SetEndPosition => historical_board.write().set_end(),
+
+        ActionInner::StepBack => {
+            if let Some(m) = historical_board.read().get_previous_move() {
+                move_builder.write().step_back(m);
+            }
+        }
+
+        ActionInner::StepForward => {
+            if let Some(m) = historical_board.read().get_next_move() {
+                move_builder.write().step_forward(m);
+            }
+        }
+
+        _ => unimplemented!(),
+        // ActionInner::StepForward => historical_board.write().set_next(),
+        // ActionInner::SetStartPosition => historical_board.write().set_start(),
+        // ActionInner::SetEndPosition => historical_board.write().set_end(),
     }
 }
 
@@ -275,14 +289,14 @@ impl Action {
     pub fn prev() -> Action {
         Self {
             discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
-            action: ActionInner::Prev,
+            action: ActionInner::StepBack,
         }
     }
 
     pub fn next() -> Action {
         Self {
             discriminator: NEXT_ACTION.fetch_add(1, Relaxed),
-            action: ActionInner::Next,
+            action: ActionInner::StepForward,
         }
     }
 }
@@ -296,8 +310,8 @@ pub(crate) enum ActionInner {
         /// String FEN representation of the position.
         fen: String,
     },
-    Prev,
-    Next,
+    StepBack,
+    StepForward,
     SetStartPosition,
     SetEndPosition,
 }
