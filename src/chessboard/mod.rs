@@ -1,4 +1,5 @@
 pub mod action;
+#[allow(clippy::module_inception)]
 pub mod chessboard;
 mod properties;
 mod san_move;

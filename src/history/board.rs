@@ -1,3 +1,4 @@
+use crate::history::BoardAction;
 use crate::SanMove;
 use dioxus::hooks::Coroutine;
 use owlchess::board::{FenParseError, PrettyStyle};
@@ -11,7 +12,7 @@ use tracing::debug;
 
 pub struct HistoricalBoard {
     /// When a move is successfully applied, it will be reported to this channel.
-    pub(crate) move_tx: Option<Coroutine<SanMove>>,
+    pub(crate) move_tx: Option<Coroutine<BoardAction>>,
     step_pointer: usize,
     /// A sequence of [`Board`]'s and associated [`Move`]'s which brings to the next version of [`Board`].
     /// until the value in `board` is produced.
@@ -26,7 +27,7 @@ impl HistoricalBoard {
     /// Construct a new board from FEN notation.
     pub fn initialize(
         fen: &str,
-        move_tx: Option<Coroutine<SanMove>>,
+        move_tx: Option<Coroutine<BoardAction>>,
     ) -> Result<Self, HistoricalBoardError> {
         Board::from_str(fen)
             .map(|board| Self {
@@ -42,35 +43,22 @@ impl HistoricalBoard {
     pub fn make_move(&mut self, m: Move) -> Result<(), HistoricalBoardError> {
         debug!("Making a move {m:?}");
 
-        // let step = self
-        //     .history
-        //     .get(self.h)
-        //     .expect("[BUG] HistoryIndex out of bounds");
-        //
-        // if matches!(step, Step::Intermediate(_, stored_move) if stored_move == &m) {
-        //     self.h += 1;
-        //     return Ok(());
-        // }
-        //
-        // // Now, move `m` is either applied to the last board or an intermediate board.
-        // // In the latter case the applied move is different from the expected move, so the history must be invalidated
-
         // 1 is added because the argument represents the length if the vector after truncation.
         self.history.truncate(self.step_pointer + 1);
 
         let step = self.history.pop().expect(Self::INVARIANT_AT_LEAST_1_STEP);
 
-        let board = step.to_board();
+        let board = step.into_board();
 
         let new_board = board.make_move(m)?;
 
-        self.history.push(Step::Intermediate(board, m));
+        self.history
+            .push(Step::Intermediate(IntermediateStep { board, m }));
 
         self.history.push(Step::Last(new_board));
 
         self.step_pointer = self.history.len() - 1;
 
-        // TODO think how to correctly report new moves and navigation acts.
         self.report_move();
 
         Ok(())
@@ -122,7 +110,27 @@ impl HistoricalBoard {
     ///
     /// Decrements the step pointer.
     pub fn step_back(&mut self) {
-        self.step_pointer = self.step_pointer.saturating_sub(1);
+        if self.step_pointer == 0 {
+            debug!("Stepping back in impossible. Current step is the last.");
+            return;
+        }
+
+        // Subtraction is safe.
+        self.step_pointer -= 1;
+
+        let current_step_view = self
+            .history
+            .get(self.step_pointer)
+            .expect("Step pointer out of bounds");
+
+        if let Some(tx) = self.move_tx.as_ref() {
+            let Step::Intermediate(s) = current_step_view else {
+                panic!("Stepping back from any Step should be an intermediate step.");
+            };
+
+            tx.send(BoardAction::StepBack(s.into()));
+        }
+
         debug!(
             "Stepping back: new pointer = {}/{}",
             self.step_pointer,
@@ -135,9 +143,27 @@ impl HistoricalBoard {
     /// Increments the step pointer,
     /// provided the step pointer is not pointing to the last [`Step`].
     pub fn step_forward(&mut self) {
-        if self.step_pointer < self.history.len() - 1 {
-            self.step_pointer += 1;
+        let current_step_view = self
+            .history
+            .get(self.step_pointer)
+            .expect("Step pointer out of bounds");
+
+        // if self.step_pointer < self.history.len() - 1 {
+        //     self.step_pointer += 1;
+        // }
+
+        // We can move forward from an intermediate step.
+        let Step::Intermediate(s) = current_step_view else {
+            debug!("Stepping forward in impossible. Current step is the last.");
+            return;
+        };
+
+        self.step_pointer += 1;
+
+        if let Some(tx) = self.move_tx.as_ref() {
+            tx.send(BoardAction::StepForward(s.into()));
         }
+
         debug!(
             "Stepping forward: new pointer = {}/{}",
             self.step_pointer,
@@ -146,7 +172,7 @@ impl HistoricalBoard {
     }
 
     pub fn last_move(&self) -> Option<Move> {
-        if let [.., Step::Intermediate(_, m), _last] = &self.history[..] {
+        if let [.., Step::Intermediate(IntermediateStep { m, .. }), _last] = &self.history[..] {
             Some(*m)
         } else {
             None
@@ -160,8 +186,8 @@ impl HistoricalBoard {
         let last_but_1 = self.history.pop();
 
         let (board, m) = match last_but_1 {
-            None => (last.to_board(), None),
-            Some(Step::Intermediate(board, m)) => (board, Some(m)),
+            None => (last.into_board(), None),
+            Some(Step::Intermediate(IntermediateStep { board, m })) => (board, Some(m)),
             Some(Step::Last(_)) => unreachable!("{}", Self::INVARIANT_LAST_BUT_1_IS_INTERMEDIATE),
         };
 
@@ -177,10 +203,18 @@ impl HistoricalBoard {
 
     pub fn set_start(&mut self) {
         self.step_pointer = 0;
+
+        if let Some(tx) = self.move_tx.as_ref() {
+            tx.send(BoardAction::SetStartPosition);
+        }
     }
 
     pub fn set_end(&mut self) {
         self.step_pointer = self.history.len() - 1;
+
+        if let Some(tx) = self.move_tx.as_ref() {
+            tx.send(BoardAction::SetEndPosition);
+        }
     }
 
     fn represent_current_board(&self) -> String {
@@ -191,8 +225,13 @@ impl HistoricalBoard {
         )
     }
 
+    /// Retrieve references to:
+    /// - the board immediately preceding the current last board,
+    /// - and the move that transitions the preceding board to the current last board.
     fn last_intermediate_step(&self) -> Option<(&Board, &Move)> {
-        if let [.., Step::Intermediate(board, m), Step::Last(_)] = &self.history[..] {
+        if let [.., Step::Intermediate(IntermediateStep { board, m }), Step::Last(_)] =
+            &self.history[..]
+        {
             Some((board, m))
         } else {
             None
@@ -203,15 +242,20 @@ impl HistoricalBoard {
         if let [.., Step::Last(board)] = &self.history[..] {
             board
         } else {
-            panic!("[BUG] History must have last step");
+            panic!("[BUG] History must have the last step");
         }
     }
 
+    /// Returns the [`Board`] currently referenced by the `step_pointer`.
     fn current_board_view(&self) -> &Board {
+        self.current_step_view().as_board()
+    }
+
+    /// Returns the [`Step`] currently referenced by the `step_pointer`.
+    fn current_step_view(&self) -> &Step {
         self.history
             .get(self.step_pointer)
             .expect("Step pointer out of bounds")
-            .as_board()
     }
 
     fn report_move(&self) {
@@ -236,7 +280,7 @@ impl HistoricalBoard {
                 .color()
                 .expect("Move is valid, thus src must contain a piece");
 
-            tx.send(SanMove::new(&san_repr, piece, color));
+            tx.send(BoardAction::Apply(SanMove::new(&san_repr, piece, color)));
         }
     }
 }
@@ -257,29 +301,57 @@ impl Deref for HistoricalBoard {
 
 enum Step {
     Last(Board),
-    Intermediate(Board, Move),
+    Intermediate(IntermediateStep),
 }
 
 impl Step {
-    fn to_board(self) -> Board {
+    fn into_board(self) -> Board {
         match self {
             Step::Last(board) => board,
-            Step::Intermediate(board, _) => board,
+            Step::Intermediate(IntermediateStep { board, .. }) => board,
         }
     }
 
     fn as_move(&self) -> Option<Move> {
         match self {
             Step::Last(_) => None,
-            Step::Intermediate(_, m) => Some(*m),
+            Step::Intermediate(IntermediateStep { m, .. }) => Some(*m),
         }
     }
 
     fn as_board(&self) -> &Board {
         match self {
             Step::Last(board) => board,
-            Step::Intermediate(board, _) => board,
+            Step::Intermediate(IntermediateStep { board, .. }) => board,
         }
+    }
+}
+
+struct IntermediateStep {
+    board: Board,
+    m: Move,
+}
+
+impl From<&IntermediateStep> for SanMove {
+    fn from(step: &IntermediateStep) -> Self {
+        let IntermediateStep { board, m } = step;
+
+        let san_repr = m
+            .styled(board, Style::San)
+            .expect("Board and move form a valid intermediate step")
+            .to_string();
+
+        let src_cell = board.get(m.src());
+
+        let piece = src_cell
+            .piece()
+            .expect("Move is valid, thus src must contain a piece");
+
+        let color = src_cell
+            .color()
+            .expect("Move is valid, thus src must contain a piece");
+
+        SanMove::new(&san_repr, piece, color)
     }
 }
 

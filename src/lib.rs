@@ -1,6 +1,6 @@
 mod chessboard;
 pub(crate) mod files;
-pub(crate) mod historical_board;
+mod history;
 pub(crate) mod move_builder;
 pub(crate) mod piece;
 mod pieces;
@@ -9,10 +9,11 @@ pub(crate) mod ranks;
 mod square;
 
 pub use chessboard::{Action, Chessboard, ChessboardProps, SanMove};
+pub use history::BoardAction;
 pub use owlchess::Color;
 pub use pieces::PieceSet;
 
-use crate::historical_board::HistoricalBoard;
+use crate::history::HistoricalBoard;
 use crate::move_builder::{MoveAction, MoveBuilder};
 use dioxus::prelude::{Readable, Signal, Writable};
 use owlchess::board::PrettyStyle;

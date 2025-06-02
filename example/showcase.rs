@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 use dioxus::prelude::*;
-use dioxus_chessboard::{Action, Chessboard, ChessboardProps, Color, PieceSet, SanMove};
+use dioxus_chessboard::{Action, BoardAction, Chessboard, ChessboardProps, Color, PieceSet};
 use tracing::{debug, Level};
 
 #[cfg(feature = "showcase")]
@@ -34,7 +34,7 @@ fn App() -> Element {
 
     let promotion = "rnbqkb1r/ppppn1P1/7p/8/8/4BN2/PPp1BPPP/RN1QK2R w KQkq - 2 9".to_string();
 
-    let san_tx = use_coroutine(|mut rx: UnboundedReceiver<SanMove>| async move {
+    let san_tx = use_coroutine(|mut rx: UnboundedReceiver<BoardAction>| async move {
         while let Some(msg) = rx.next().await {
             debug!("Chessboard reports: {msg}");
         }

@@ -1,5 +1,5 @@
 use crate::chessboard::action::Action;
-use crate::chessboard::san_move::SanMove;
+use crate::history::BoardAction;
 use crate::{Color, PieceSet};
 use dioxus::prelude::*;
 use std::fmt::Debug;
@@ -30,7 +30,7 @@ pub struct ChessboardProps {
     /// Injected action.
     action: Option<Action>,
     /// Transmitter channel of moves made on the board.
-    san_tx: Option<Coroutine<SanMove>>,
+    san_tx: Option<Coroutine<BoardAction>>,
 }
 
 impl ChessboardProps {
@@ -62,7 +62,7 @@ pub struct CompleteChessboardProps {
     pub starting_position: String,
     pub pieces_set: PieceSet,
     pub action: Option<Action>,
-    pub san_tx: Option<Coroutine<SanMove>>,
+    pub san_tx: Option<Coroutine<BoardAction>>,
 }
 
 impl Debug for CompleteChessboardProps {

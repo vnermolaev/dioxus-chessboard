@@ -1,7 +1,7 @@
 use crate::chessboard::action::{Action, ActionInner, PROCESSED_ACTION};
 use crate::chessboard::properties::ChessboardProps;
 use crate::files::Files;
-use crate::historical_board::HistoricalBoard;
+use crate::history::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
 use crate::promotion::Promotion;
 use crate::ranks::Ranks;
