@@ -4,13 +4,16 @@ use tracing::debug;
 /// A [`Move`] can be built step by step or immediately injected.
 #[derive(Debug)]
 pub enum ApplicableMove {
-    /// [`Move`] built through a stp-by-step process of selecting source/destination/promotion.
+    /// [`Move`] built through a step-by-step process of selecting source/destination/promotion.
     Manual(Move),
     /// [`Move`] injected immediately by SAN.
     Automatic(Move),
     /// Fictional [`Move`] to manage step-backs.
     /// It shall never be applied to a [`Board`].
     Revert(Move),
+
+    Previous(Move),
+    Next(Move),
 }
 
 impl ApplicableMove {
@@ -19,6 +22,8 @@ impl ApplicableMove {
             Self::Manual(m) => m.src(),
             Self::Automatic(m) => m.src(),
             Self::Revert(m) => m.src(),
+            Self::Previous(m) => m.src(),
+            Self::Next(m) => m.src(),
         }
     }
 
@@ -27,13 +32,15 @@ impl ApplicableMove {
             Self::Manual(m) => m.dst(),
             Self::Automatic(m) => m.dst(),
             Self::Revert(m) => m.dst(),
+            Self::Previous(m) => m.dst(),
+            Self::Next(m) => m.dst(),
         }
     }
 
     pub(crate) fn animations(&self) -> Vec<(Coord, Coord)> {
         match self {
             Self::Automatic(m) => vec![(m.src(), m.dst())],
-            Self::Revert(m) => {
+            Self::Revert(m) | Self::Previous(m) | Self::Next(m) => {
                 let animations = match m.kind() {
                     // MoveKind::CastlingKingside => {}
                     // MoveKind::CastlingQueenside => {}
@@ -46,7 +53,7 @@ impl ApplicableMove {
                     _ => vec![(m.src(), m.dst())],
                 };
 
-                debug!("Reverting {m:?}, animation: {animations:?}");
+                debug!("Reverting/going back/advancing {m:?}, animation: {animations:?}");
                 animations
             }
             Self::Manual(m) => {

@@ -1,4 +1,4 @@
-use crate::historical_board::HistoricalBoard;
+use crate::history::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
 use crate::pieces::compute_piece_img_src;
 use crate::{finalize, PieceSet};

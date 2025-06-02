@@ -1,4 +1,4 @@
-use crate::historical_board::HistoricalBoard;
+use crate::history::HistoricalBoard;
 use crate::move_builder::MoveBuilder;
 use crate::piece::Piece;
 use crate::PieceSet;
@@ -7,8 +7,8 @@ use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
 use owlchess::{Color, Coord};
 
-#[component]
 /// A component rendering a square, potentially with a [`Piece`] inside.
+#[component]
 pub(crate) fn Square(props: SquareProps) -> Element {
     let board = use_context::<Signal<HistoricalBoard>>();
     let mut move_builder = use_context::<Signal<MoveBuilder>>();
