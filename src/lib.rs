@@ -18,8 +18,8 @@ use dioxus::prelude::{Readable, Signal, Writable};
 use owlchess::board::PrettyStyle;
 use tracing::debug;
 
+/// Tries finalizing the state of [`MoveBuilder`] and apply the [`owlchess::Move`].
 fn finalize(move_builder: &mut Signal<MoveBuilder>, board: &mut Signal<HistoricalBoard>) {
-    // Try finalizing the move builder and apply the move.
     let finalized = move_builder.write().finalize();
 
     match finalized {
