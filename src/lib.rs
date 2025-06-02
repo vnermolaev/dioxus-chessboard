@@ -1,17 +1,15 @@
+mod chessboard;
 pub(crate) mod files;
 pub(crate) mod historical_board;
 pub(crate) mod move_builder;
 pub(crate) mod piece;
+mod pieces;
 pub(crate) mod promotion;
 pub(crate) mod ranks;
-
-mod chessboard;
-pub use chessboard::{Action, Chessboard, ChessboardProps, SanMove};
-mod pieces;
 mod square;
 
+pub use chessboard::{Action, Chessboard, ChessboardProps, SanMove};
 pub use owlchess::Color;
-
 pub use pieces::PieceSet;
 
 use crate::historical_board::HistoricalBoard;
